@@ -1,80 +1,95 @@
 package cluster
 
 import (
-
+	"time"
 )
 
-
-func join(){
-	// Nodo nuevo envia IP a Nodo maestro
-	// tambien a Coordinator
+type config struct {
+	isVoting bool
+	uptime   int64
+	peerIPs  []string
+	leaderIP string
+	timeout  int64
+	interval time.Duration
+	selfIP string
 }
 
-func heartbeat(){
+func NewConfig() config {
+	// Create config
+	// Decides new master!
+	return config{isVoting: false, uptime: time.Now().UnixNano(), interval: 2*time.Second}
+}
+
+
+func (c *config) addPeer(peerIP string) {
+	c.peerIPs = append(c.peerIPs, peerIP)
+}
+
+func (c *config) removePeer(peerIP string) {
+	var newPeerIPs []string
+	for _, val := range c.peerIPs {
+		if val == peerIP{
+			continue
+		}
+		c.peerIPs = append(c.peerIPs, peerIP)
+	}
+	c.peerIPs = newPeerIPs
+}
+
+
+func (c *config) watchLeader() {
+	go func() {
+		for {
+			if time.Now().UnixNano() > c.timeout {
+				c.startElection()				
+				time.Sleep(c.interval)
+			}
+			time.Sleep(c.interval)
+		}
+	}()
+}
+
+func (c *config) startElection() {
+	newLeader := c.selfIP
+	bestTime := c.uptime
+
+	for _, ip := range c.peerIPs {
+		res := 0 // RPC Methodcall
+		if res > int(bestTime) {
+			newLeader = ip
+		}
+	}
+	c.leaderIP = newLeader	
+
+	if newLeader == c.selfIP {
+		// TODO: DECIRLE AL GATEWAY QUYE IM THE CAPTAIN
+	}
+	
+}
+
+// Comunicacion in-cluster
+func join() {
+	// Nodo nuevo envia IP a Nodo maestro
+	// tambien a Coordinator
+	// If voting ? not join!!
+}
+
+func heartbeat() {
 	// Nodo en control envia heartbeat a los esclavos
 	// Si esclavos no tienen heartbeat del control, hacen consenso
 }
 
-func caregiver(){
-	// Check TTL of slaves, remove ones with TTL fromo config
+func caregiver() {
+	// Check TTL of slaves, remove ones with TTL from config
 	// TODO: Read TTL
 }
 
-func check(){
-	// Check TTL of slaves, remove ones with TTL fromo config
-	// TODO: Read TTL
-}
-
-func complain(){
-	// When heartbeat is not received slaves create new master
-}
-
-func sendMessage(){
-	// Master sends a message to all replicas
-	// goroutines?
-}
-
-func removeMessage(){
-	// Master says to remove already sent message
-	// goroutines?
-}
-
-func sendChannel(){
-	// Master sends a Channel to all replicas
-	// goroutines?
-}
-
-func removeChannel(){
-	// Master says to remove already sent Channel
-	// goroutines?
-}
-
-func sendTopic(){
-	// Master sends a Topic to all replicas
-	// goroutines?
-}
-
-func removeTopic(){
-	// Master says to remove already sent Topic
-	// goroutines?
-}
-
-func sendSubscriber(){
-	// Master sends a Topic to all replicas
-	// goroutines?
-}
-
-func removeSubscriber(){
-	// Master says to remove already sent Topic
-	// goroutines?
-}
-
-func catchmeup(){
+func catchmeup() {
 	// Llamado en JOIN
 	// SOlicitar la info
 }
 
-func catchyouup(){
+func catchyouup() {
 	// Llamado desde el main si nos solicitan info
 	// Goroutine????
 }
