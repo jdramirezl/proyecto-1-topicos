@@ -12,4 +12,3 @@ func disconnectQueue(){
 
 }
 
-func 

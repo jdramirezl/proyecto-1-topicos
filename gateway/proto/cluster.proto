@@ -1,0 +1,47 @@
+syntax = "proto3";
+option go_package = "proto/cluster/;cluster";
+
+import "google/protobuf/empty.proto";
+
+enum Type {
+    QUEUE = 0;
+    TOPIC = 1;
+}
+
+message MessageRequest(){
+    string id = 0;
+    string name = 1;
+    Type type = 2;
+	string payload = 3;
+}
+
+message SystemRequest(){
+    string id = 0;
+    string name = 1;
+    Type type = 2;
+    string creator = 3;
+}
+
+message SubscriberRequest {
+    string name = 1;
+    Type type = 2;
+    string ip = 3;
+}
+
+message ConnectionRequest {
+    string ip = 1;
+}
+
+service ClusterService {
+    rpc addMessagingSystem(SystemRequest) returns (google.protobuf.Empty) {};
+    rpc removeMessagingSystem(SystemRequest) returns (google.protobuf.Empty) {};
+
+    rpc addSubscriber(SubscriberRequest) returns (google.protobuf.Empty) {};
+    rpc removeSubscriber(SubscriberRequest) returns (google.protobuf.Empty) {};
+
+    rpc addConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
+    rpc removeConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
+
+    rpc addMessage(MessageRequest) returns (google.protobuf.Empty) {};
+    rpc removeMessage(MessageRequest) returns (google.protobuf.Empty) {};
+}
