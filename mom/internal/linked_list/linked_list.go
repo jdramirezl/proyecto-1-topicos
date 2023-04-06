@@ -1,8 +1,5 @@
 package linked_list
 
-import "errors"
-
-const ErrEmptyList = errors.New("linked list is empty")
 
 type LinkedList struct {
 	Head   *node
@@ -12,6 +9,14 @@ type LinkedList struct {
 type node struct {
 	Val  string
 	Next *node
+}
+
+
+func NewLinkedList() LinkedList {
+	return LinkedList {
+		Head: nil,
+		Length: 0,
+	}
 }
 
 func (q *LinkedList) Add(val string) {
@@ -28,20 +33,21 @@ func (q *LinkedList) Add(val string) {
 	n.Next = &node{Val: val}
 }
 
-func (q *LinkedList) Pop() error {
+func (q *LinkedList) Pop() *string {
 	if q.Head == nil {
-		return ErrEmptyList
+		return nil
 	}
+	res := q.Head.Val
 	q.Head = q.Head.Next
 	q.Length--
-	return nil
+	return &res
 }
 
-func (q *LinkedList) Peek() (string, error) {
+func (q *LinkedList) Peek() *string {
 	if q.Head == nil {
-		return "", ErrEmptyList
+		return nil
 	}
-	return q.Head.Val, nil
+	return &q.Head.Val
 }
 
 func (q *LinkedList) IsEmpty() bool {

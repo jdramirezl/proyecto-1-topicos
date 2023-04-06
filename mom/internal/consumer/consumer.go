@@ -11,10 +11,11 @@ import (
 type Consumer struct {
 	ID string	
 	Available bool
+	IP string
 }
 
 
-func NewConsumer() Consumer {
+func NewConsumer(address string) Consumer {
 	id := uuid.New().String()
-	return Consumer{ID: id, Available: true}		
+	return Consumer{ID: id, Available: true, IP: address}		
 }

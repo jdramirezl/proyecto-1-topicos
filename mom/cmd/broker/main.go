@@ -1,59 +1,71 @@
-package main;
+package main
 
 import (
+	"mom/internal/linked_list"
+	"mom/internal/queue"
+	"sync"
 
+	"github.com/google/uuid"
+    "mom/internal/consumer"
 )
 
+var (
+    n_client int64 = 0
+)
 type connection struct {
     id      int64
     address string
     // add other relevant metadata here
 }
 
-type queue struct {
-	name    string
-    channel chan *mom.Message
-}
-
-
 type momServer struct {
-	queues      map[string]*momQueue
-    connections map[int64]*momConnection
+	queues      map[string] *queue.Queue
+    connections map[string] *connection
     nextConnID  int64
     lock        sync.Mutex
 }
 
+
+func main(){
+    
+}
+
 // Create a new connection and add it to the list of active connections
-func (s *momServer) createConnection(address string) int64 {
+func (s *momServer) createConnection(address string) {
     conn := &connection{
-        id:      1, // TODO: babas + UUID len(s.connections) + 1,
+        id:      n_client, // TODO: babas + UUID len(s.connections) + 1,
         address: address,
     }
-    s.connections = append(s.connections, conn)
-    return conn.id
+
+    n_client += 1  
+
+    s.connections[address] = conn
 }
 
 // Delete a connection from the list of active connections
-func (s *momServer) deleteConnection(connID int) {
-    for _, conn := range s.connections {
-        if conn.id == connID {
-            s.connections = append(s.connections[:i], s.connections[i+1:]...)
-            break
-        }
-    }
+func (s *momServer) deleteConnection(address string) {
+    delete(s.connections, address)
 }
 
 // Get a list of all active connections
-func (s *momServer) getConnections() []*connection {
-    return s.connections
+func (s *momServer) getConnections() [][]string {
+    conns := make([][]string, len(s.connections))
+
+    for key, value := range s.connections {
+        conns = append(conns, []string{string(value.id), key})
+    }
+
+    return conns
 }
 
 // Create a new queue and add it to the list of active queues
 func (s *momServer) createQueue(name string) {
-    s.queues[name] = &momQueue{
-        name:    name,
-        channel: make(chan *mom.Message),
-    }
+    
+
+    queue := queue.NewQueue()
+
+    s.queues[name] = &
+
 }
 
 // Delete the queue with the given name
@@ -61,34 +73,33 @@ func (s *momServer) deleteQueue(name string) {
     delete(s.queues, name)
 }
 
-// Get a list of all active queues
-func (s *momServer) getQueues() []*queue {
-    return s.queues
-}
 
 // Add a subscriber to a queue
-func (s *momServer) subscribe(queueName string, connID int) {
-    for _, queue := range s.queues {
-        if queue.name == queueName {
-            // TODO: llamar metodo
+func (s *momServer) subscribe(queueName string, address string) {
+    for name, queue := range s.queues {
+        if name == queueName {
+            queue.AddConsumer(address)
+            break
         }
     }
 }
 
 // Remove a subscriber from a queue
-func (s *momServer) unsubscribe(queueName string, connID int) {
-    for _, queue := range s.queues {
-        if queue.name == queueName {
-            // TODO: llamar metodo
+func (s *momServer) unsubscribe(queueName string, address string) {
+    for name, queue := range s.queues {
+        if name == queueName {
+            queue.RemoveConsumer(address)
+            break
         }
     }
 }
 
 // Send a message to a queue
-func (s *momServer) receiveMessage(queueName, message string) {
-    for _, queue := range s.queues {
-        if queue.name == queueName {
-            // TODO: llamar metodo
+func (s *momServer) sendMessage(queueName string, message string) {
+    for name, queue := range s.queues {
+        if name == queueName {
+            queue.AddMessage(message)
+            break
         }
     }
 }

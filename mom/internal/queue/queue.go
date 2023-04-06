@@ -9,13 +9,36 @@ type Queue struct {
 	Messages        *linked_list.LinkedList
 	Consumers       []consumer.Consumer
 	CurrentConsumer int
-	ConsumerMap     map[string]chan string
+	ConsumerMap     map[string] chan string // Why chan string? does it matter?
+}
+
+func NewQueue() *Queue {
+	message_queue := linked_list.NewLinkedList()
+
+	q := Queue{
+        Messages: &message_queue,
+        Consumers: []consumer.Consumer{},
+        CurrentConsumer: -1,
+        ConsumerMap: map[string] chan string {},
+    }
+
+	go q.consume()
+
+	return &q
 }
 
 func (q *Queue) consume(){
 	for {
-		// Leer mensaje y si hay llamar al "send()"
+		message := q.Messages.Pop()
+		if message != nil {
+			q.Send(*message)
+		}
 	}
+}
+
+func (q *Queue) Send(message string) {
+	q.roundRobin()
+	q.sendMessage(message)
 }
 
 func (q *Queue) roundRobin() {
@@ -24,35 +47,21 @@ func (q *Queue) roundRobin() {
 	}
 }
 
-func (q *Queue) sendMessage() {
-	message, err := q.Messages.Peek()
-	if err != nil {
-		return
-	}
-	//q.Consumers[q.CurrentConsumer].ReceiveMessage(message)
-	q.Messages.Pop()
+func (q *Queue) sendMessage(message string) {
 	q.Consumers[q.CurrentConsumer].Available = false
 }
 
-func (q *Queue) unicast() {
-	q.roundRobin()
-	q.sendMessage()
-}
-
-func (q *Queue) addConsumer() chan string {
+func (q *Queue) AddConsumer(address string) chan string {
 	channel := make(chan string)
-	cons := consumer.NewConsumer()
+	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.ID] = channel
+	return channel
 }
 
-func (q *Queue) RemoveConsumer(id string) {
-	delete(q.ConsumerMap, id)
+func (q *Queue) RemoveConsumer(address string) {
+	delete(q.ConsumerMap, address)
 }
 
-func (q *Queue) addMessage(){
-	// Receive message from brojer and add to list
-}
-
-func (q *Queue) Send() {
-	q.unicast()
+func (q *Queue) AddMessage(message string){
+	q.Messages.Add(message)
 }
