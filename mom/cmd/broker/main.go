@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"mom/internal/queue"
 )
 
@@ -16,11 +17,20 @@ type connection struct {
 type momServer struct {
 	queues      map[string] *queue.Queue
     connections map[string] *connection
-    nextConnID  int64
 }
 
+var (
+    mom *momServer
+)
 
-func main(){
+func main() {
+    mom := &momServer {}
+    mom.init()
+}
+
+func (s *momServer) init() {
+    s.queues = map[string] *queue.Queue {}
+    s.connections = map[string] *connection {}
     
 }
 
@@ -46,7 +56,7 @@ func (s *momServer) getConnections() [][]string {
     conns := make([][]string, len(s.connections))
 
     for key, value := range s.connections {
-        conns = append(conns, []string{string(value.id), key})
+        conns = append(conns, []string{fmt.Sprint(value.id), key})
     }
 
     return conns
@@ -92,9 +102,4 @@ func (s *momServer) sendMessage(queueName string, message string) {
             break
         }
     }
-}
-
-// Handle requests from clients by calling the appropriate server-side methods
-func (s *momServer) HandleRequest() {
-    
 }
