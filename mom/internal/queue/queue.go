@@ -29,9 +29,14 @@ func NewQueue() *Queue {
 
 func (q *Queue) consume(){
 	for {
+		if q.CurrentConsumer == -1 {
+			continue
+		}
+
 		message := q.Messages.Pop()
+		
 		if message != nil {
-			q.Send(*message)
+			go q.Send(*message)
 		}
 	}
 }
@@ -42,6 +47,7 @@ func (q *Queue) Send(message string) {
 }
 
 func (q *Queue) roundRobin() {
+
 	for !q.Consumers[q.CurrentConsumer].Available {
 		q.CurrentConsumer = (q.CurrentConsumer + 1) % len(q.Consumers)
 	}
@@ -55,11 +61,17 @@ func (q *Queue) AddConsumer(address string) chan string {
 	channel := make(chan string)
 	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.ID] = channel
+
+	q.roundRobin() // When current consumer is -1
+
 	return channel
 }
 
 func (q *Queue) RemoveConsumer(address string) {
 	delete(q.ConsumerMap, address)
+	if len(q.ConsumerMap) == 0 {
+		q.CurrentConsumer = -1
+	}
 }
 
 func (q *Queue) AddMessage(message string){
