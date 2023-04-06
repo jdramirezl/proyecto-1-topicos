@@ -1,12 +1,7 @@
 package main
 
 import (
-	"mom/internal/linked_list"
 	"mom/internal/queue"
-	"sync"
-
-	"github.com/google/uuid"
-    "mom/internal/consumer"
 )
 
 var (
@@ -22,7 +17,6 @@ type momServer struct {
 	queues      map[string] *queue.Queue
     connections map[string] *connection
     nextConnID  int64
-    lock        sync.Mutex
 }
 
 
@@ -60,12 +54,8 @@ func (s *momServer) getConnections() [][]string {
 
 // Create a new queue and add it to the list of active queues
 func (s *momServer) createQueue(name string) {
-    
-
     queue := queue.NewQueue()
-
-    s.queues[name] = &
-
+    s.queues[name] = queue
 }
 
 // Delete the queue with the given name
