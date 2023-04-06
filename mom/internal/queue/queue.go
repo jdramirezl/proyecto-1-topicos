@@ -47,7 +47,6 @@ func (q *Queue) Send(message string) {
 }
 
 func (q *Queue) roundRobin() {
-
 	for !q.Consumers[q.CurrentConsumer].Available {
 		q.CurrentConsumer = (q.CurrentConsumer + 1) % len(q.Consumers)
 	}
@@ -55,6 +54,7 @@ func (q *Queue) roundRobin() {
 
 func (q *Queue) sendMessage(message string) {
 	q.Consumers[q.CurrentConsumer].Available = false
+	// TODO: SEND THE MESSAGE!!
 }
 
 func (q *Queue) AddConsumer(address string) chan string {
