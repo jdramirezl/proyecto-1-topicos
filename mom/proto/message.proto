@@ -1,0 +1,34 @@
+syntax = "proto3";
+option go_package = "proto/queue/;queue";
+
+import "google/protobuf/empty.proto";
+
+enum Type {
+    QUEUE = 0;
+    TOPIC = 1;
+}
+
+message MessageRequest(){
+    string id = 0;
+    string name = 1;
+    Type type = 2;
+	string payload = 3;
+}
+
+message ConsumeMessageRequest {
+    string name = 1;
+    Type type = 2;
+    string ip = 3;
+}
+
+message ConsumeMessageResponse {
+    string payload = 1;
+}
+
+service QueueService {
+
+    rpc addMessage(MessageRequest) returns (google.protobuf.Empty) {};
+    rpc removeMessage(MessageRequest) returns (google.protobuf.Empty) {};
+
+    rpc ConsumeMessage(ConsumeMessageRequest) returns (ConsumeMessageResponse) {};
+}

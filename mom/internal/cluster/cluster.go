@@ -64,7 +64,6 @@ func (c *config) startElection() {
 	if newLeader == c.selfIP {
 		// TODO: DECIRLE AL GATEWAY QUYE IM THE CAPTAIN
 	}
-	
 }
 
 // Comunicacion in-cluster

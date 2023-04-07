@@ -47,6 +47,10 @@ func (q *Queue) Send(message string) {
 }
 
 func (q *Queue) roundRobin() {
+	if q.CurrentConsumer == -1 && len(q.ConsumerMap) > 0 {
+		q.CurrentConsumer = 0
+	}
+
 	for !q.Consumers[q.CurrentConsumer].Available {
 		q.CurrentConsumer = (q.CurrentConsumer + 1) % len(q.Consumers)
 	}

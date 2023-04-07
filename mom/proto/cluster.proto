@@ -8,13 +8,6 @@ enum Type {
     TOPIC = 1;
 }
 
-message MessageRequest(){
-    string id = 0;
-    string name = 1;
-    Type type = 2;
-	string payload = 3;
-}
-
 message SystemRequest(){
     string id = 0;
     string name = 1;
@@ -28,8 +21,24 @@ message SubscriberRequest {
     string ip = 3;
 }
 
-message ConnectionRequest {
+message PeerRequest {
     string ip = 1;
+}
+
+message PeerRequest {
+    string ip = 1;
+}
+
+message MasterRequest {
+    string ip = 1;
+}
+
+message PeerResponse {
+    repeated string ip = 1;
+}
+
+message electLeaderResponse {
+    int64 uptime = 1;
 }
 
 service ClusterService {
@@ -42,6 +51,11 @@ service ClusterService {
     rpc addConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
     rpc removeConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
 
-    rpc addMessage(MessageRequest) returns (google.protobuf.Empty) {};
-    rpc removeMessage(MessageRequest) returns (google.protobuf.Empty) {};
+    rpc addPeer(PeerRequest) returns (PeerResponse) {};
+    rpc removePeer(PeerRequest) returns (google.protobuf.Empty) {};
+
+    rpc newMaster (MasterRequest) return (google.protobuf.Empty);
+    rpc heartbeat (google.protobuf.Empty) return (google.protobuf.Empty);
+    
+    rpc electLeader (google.protobuf.Empty) return (electLeaderResponse);
 }

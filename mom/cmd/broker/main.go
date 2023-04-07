@@ -31,13 +31,12 @@ func main() {
 func (s *momServer) init() {
     s.queues = map[string] *queue.Queue {}
     s.connections = map[string] *connection {}
-    
 }
 
 // Create a new connection and add it to the list of active connections
 func (s *momServer) createConnection(address string) {
     conn := &connection{
-        id:      n_client, // TODO: babas + UUID len(s.connections) + 1,
+        id:      n_client, 
         address: address,
     }
 

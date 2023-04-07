@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package mom;
-
-message Message {
-  s tring text = 1;
-  // Add any additional fields here as needed
-}
