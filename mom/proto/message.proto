@@ -8,11 +8,11 @@ enum Type {
     TOPIC = 1;
 }
 
-message MessageRequest(){
-    string id = 0;
-    string name = 1;
-    Type type = 2;
-	string payload = 3;
+ message MessageRequest {
+    string id = 1;
+    string name = 2;
+    Type type = 3;
+	string payload = 4;
 }
 
 message ConsumeMessageRequest {
@@ -27,8 +27,8 @@ message ConsumeMessageResponse {
 
 service QueueService {
 
-    rpc addMessage(MessageRequest) returns (google.protobuf.Empty) {};
-    rpc removeMessage(MessageRequest) returns (google.protobuf.Empty) {};
+    rpc AddMessage(MessageRequest) returns (google.protobuf.Empty) {};
+    rpc RemoveMessage(MessageRequest) returns (google.protobuf.Empty) {};
 
     rpc ConsumeMessage(stream ConsumeMessageRequest) returns (stream ConsumeMessageResponse) {};
 }
