@@ -8,11 +8,11 @@ enum Type {
     TOPIC = 1;
 }
 
-message SystemRequest(){
-    string id = 0;
-    string name = 1;
-    Type type = 2;
-    string creator = 3;
+message SystemRequest {
+    string id = 1;
+    string name = 2;
+    Type type = 3;
+    string creator = 4;
 }
 
 message SubscriberRequest {
@@ -25,7 +25,7 @@ message PeerRequest {
     string ip = 1;
 }
 
-message PeerRequest {
+message ConnectionRequest {
     string ip = 1;
 }
 
@@ -54,8 +54,8 @@ service ClusterService {
     rpc addPeer(PeerRequest) returns (PeerResponse) {};
     rpc removePeer(PeerRequest) returns (google.protobuf.Empty) {};
 
-    rpc newMaster (MasterRequest) return (google.protobuf.Empty);
-    rpc heartbeat (google.protobuf.Empty) return (google.protobuf.Empty);
+    rpc newMaster (MasterRequest) returns (google.protobuf.Empty){};
+    rpc heartbeat (google.protobuf.Empty) returns (google.protobuf.Empty){};
     
-    rpc electLeader (google.protobuf.Empty) return (electLeaderResponse);
+    rpc electLeader (google.protobuf.Empty) returns (electLeaderResponse){};
 }
