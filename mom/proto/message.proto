@@ -30,5 +30,5 @@ service QueueService {
     rpc addMessage(MessageRequest) returns (google.protobuf.Empty) {};
     rpc removeMessage(MessageRequest) returns (google.protobuf.Empty) {};
 
-    rpc ConsumeMessage(ConsumeMessageRequest) returns (ConsumeMessageResponse) {};
+    rpc ConsumeMessage(stream ConsumeMessageRequest) returns (stream ConsumeMessageResponse) {};
 }
