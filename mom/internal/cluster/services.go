@@ -1,41 +1,41 @@
 package cluster
 
-func sendMessage(){
+func sendMessage() {
 	// Master sends a message to all replicas
 	// goroutines?
 }
 
-func removeMessage(){
+func removeMessage() {
 	// Master says to remove already sent message
 	// goroutines?
 }
 
-func sendChannel(){
+func sendChannel() {
 	// Master sends a Channel to all replicas
 	// goroutines?
 }
 
-func removeChannel(){
+func removeChannel() {
 	// Master says to remove already sent Channel
 	// goroutines?
 }
 
-func sendTopic(){
+func sendTopic() {
 	// Master sends a Topic to all replicas
 	// goroutines?
 }
 
-func removeTopic(){
+func removeTopic() {
 	// Master says to remove already sent Topic
 	// goroutines?
 }
 
-func sendSubscriber(){
+func sendSubscriber() {
 	// Master sends a Topic to all replicas
 	// goroutines?
 }
 
-func removeSubscriber(){
+func removeSubscriber() {
 	// Master says to remove already sent Topic
 	// goroutines?
 }

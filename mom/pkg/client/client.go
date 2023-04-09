@@ -1,21 +1,31 @@
 package client
 
+import (
+	"mom/internal/proto/cluster"
+	"mom/internal/proto/message"
+	"mom/pkg/internal/connection"
+)
+
 type Client struct {
-	grpcConnection *grpc.ClientConn
+	messageClient message.MessageServiceClient
+	clusterClient cluster.ClusterServiceClient
 }
 
-func NewClient(host, port string) {
-	grpcConn, err := client.NewGrpcClient(host, port)
+func NewClient(host, port string) Client {
+	grpcConn, err := connection.NewGrpcClient(host, port)
 	if err != nil {
 		panic(err)
 	}
-	return Client{}
+	messageClient := message.NewMessageServiceClient(grpcConn)
+	clusterClient := cluster.NewClusterServiceClient(grpcConn)
+
+	return Client{messageClient: messageClient, clusterClient: clusterClient}
 }
 
-func (c *Client) Publish() {
+func (c *Client) Publish(payload string) {
 
 }
 
-func (c *Client) Subscribe() {
+func (c *Client) Subscribe(queue string) chan string {
 
 }

@@ -2,39 +2,104 @@ package handler
 
 import (
 	"context"
-	"mom/cmd/handler"
+
+	proto_cluster "mom/internal/proto/cluster"
+
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
-// func (c *ClusterService) AddMessagingSystem(ctx context.Context, _ *cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
-// func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
-// func (c *ClusterService) AddSubscriber(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
-// func (c *ClusterService) RemoveSubscriber(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
-// func (c *ClusterService) AddConnection(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
-// func (c *ClusterService) RemoveConnection(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
+func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *cluster.SystemRequest) (*empty.Empty, error) {
+	Type := req.Type
+	Name := req.Name
+	Creator := req.Creator
 
-func (c *ClusterService) AddPeer(ctx context.Context, req *cluster.PeerRequest) {
-	// Add peer to config
+	if Type == 0 {
+		c.momService.CreateQueue(Name, Creator)
+	} else {
+		c.momService.CreateTopic(Name, Creator)
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
+
+	Type := req.Type
+	Name := req.Name
+	Creator := req.Creator
+
+	if Type == 0 {
+		c.momService.DeleteQueue(Name, Creator)
+	} else {
+		c.momService.DeleteTopic(Name, Creator)
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
+	Type := req.Type
+	Name := req.Name
+	Creator := req.Creator
+
+	if Type == 0 {
+		Type = message.Type_QUEUE
+	} else {
+		Type = message.Type_TOPIC
+	}
+
+	c.momService.Subscribe(Name, Creator, Type)
+
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) RemoveSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
+	Type := req.Type
+	Name := req.Name
+	Creator := req.Creator
+
+	if Type == 0 {
+		Type = message.Type_QUEUE
+	} else {
+		Type = message.Type_TOPIC
+	}
+
+	c.momService.Unsubscribe(Name, Creator, Type)
+
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) AddConnection(ctx context.Context, _ *proto_cluster.ConnectionRequest) (*files.ConsumeMessageResponse, error) {
+	connectionIp := req.Ip
+	c.momService.CreateConnection(connectionIp)
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) RemoveConnection(ctx context.Context, _ *proto_cluster.ConnectionRequest) (*files.ConsumeMessageResponse, error) {
+	connectionIp := req.Ip
+	c.momService.DeleteConnection(connectionIp)
+	return &empty.Empty{}, nil
+}
+
+func (c *ClusterService) AddPeer(ctx context.Context, req *cluster.PeerRequest) (*empty.Empty, error) {
 	c.momService.Config.addPeer(req.Ip)
-
+	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) RemovePeer(ctx context.Context, req *cluster.PeerRequest) {
-	// Remove peer from config
+func (c *ClusterService) RemovePeer(ctx context.Context, req *cluster.PeerRequest) (*empty.Empty, error) {
 	c.momService.Config.removePeer(req.Ip)
+	return &empty.Empty{}, nil
 }
 
-// func (c *ClusterService) NewMaster(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
+// func (c *ClusterService) NewMaster(ctx context.Context, _ *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
 // }
-func (c *ClusterService) Heartbeat(ctx context.Context) {
-	// Reset TTL
-	main.Config.timeout = time.Now().UnixNano() // TODO
+
+func (c *ClusterService) Heartbeat(ctx context.Context) (*empty.Empty, error) {
+	c.momService.Config.refreshTimeout()
+	return &empty.Empty{}, nil
 }
 
-// func (c *ClusterService) ElectLeader(ctx context.Context, _ *proto_queue.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
+func (c *ClusterService) ElectLeader(ctx context.Context, _ *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
+
+	return
+}

@@ -1,4 +1,4 @@
-package queue;
+package broker;
 
 import (
 	"mom/internal/consumer"
@@ -13,30 +13,27 @@ type Queue struct {
 	Creator 	   string
 }
 
-func NewQueue(creator_ip string) *Queue {
-	message_queue := linked_list.NewLinkedList()
+func NewQueue(creator_ip string) Broker {
+	messageList := linked_list.NewLinkedList()
 
 	q := Queue{
-        Messages: &message_queue,
+        Messages: &messageList,
         Consumers: []consumer.Consumer{},
         CurrentConsumer: -1,
         ConsumerMap: map[string] chan string {},
 		Creator: creator_ip,
     }
 
-	go q.consume()
-
 	return &q
 }
 
-func (q *Queue) consume(){
+func (q *Queue) Consume(){
 	for {
 		if q.CurrentConsumer == -1 {
 			continue
 		}
 
 		message := q.Messages.Pop()
-		
 		if message != nil {
 			go q.Send(*message)
 		}
@@ -60,13 +57,13 @@ func (q *Queue) roundRobin() {
 
 func (q *Queue) sendMessage(message string) {
 	q.Consumers[q.CurrentConsumer].Available = false
-	// TODO: SEND THE MESSAGE!!
+	q.ConsumerMap[q.Consumers[q.CurrentConsumer].IP] <- message
 }
 
 func (q *Queue) AddConsumer(address string) chan string {
 	channel := make(chan string)
 	cons := consumer.NewConsumer(address)
-	q.ConsumerMap[cons.ID] = channel
+	q.ConsumerMap[cons.IP] = channel
 
 	q.roundRobin() // When current consumer is -1
 
@@ -82,4 +79,17 @@ func (q *Queue) RemoveConsumer(address string) {
 
 func (q *Queue) AddMessage(message string){
 	q.Messages.Add(message)
+}
+
+func (q *Queue) PopMessage(){
+	q.Messages.Pop()
+}
+
+func (q *Queue) EnableConsumer(consumerIP string){
+	for _, consumer := q.Consumers {
+		if consumer.IP == consumerIP {
+			consumer.Available = true
+			return
+		}
+	}
 }

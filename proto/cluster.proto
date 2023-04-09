@@ -9,7 +9,6 @@ enum Type {
 }
 
 message SystemRequest {
-    string id = 1;
     string name = 2;
     Type type = 3;
     string creator = 4;

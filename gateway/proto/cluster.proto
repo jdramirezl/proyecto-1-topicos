@@ -9,14 +9,12 @@ enum Type {
 }
 
 message MessageRequest(){
-    string id = 0;
     string name = 1;
     Type type = 2;
 	string payload = 3;
 }
 
 message SystemRequest(){
-    string id = 0;
     string name = 1;
     Type type = 2;
     string creator = 3;

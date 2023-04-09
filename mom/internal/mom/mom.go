@@ -1,50 +1,61 @@
 package mom
 
 import (
-	"fmt"
-	"mom/internal/proto/message"
-	"mom/internal/queue"
+	"errors"
+	"mom/internal/broker"
 	"mom/internal/cluster"
+	"mom/internal/proto/message"
 )
 
 var (
-	n_client int64 = 0
+	ErrBrokerNotFound = errors.New("broker not found")
 )
 
-type connection struct {
-	id      int64
-	address string
-	// add other relevant metadata here
-}
-
 type MomService interface {
+	StartConsumption()
+	CreateConnection(address string)
+	DeleteConnection(address string)
+	CreateTopic(name string, clientIP string)
+	DeleteTopic(name string, clientIp string) error
+	CreateQueue(name string, clientIP string)
+	DeleteQueue(name string, clientIp string) error
+	Subscribe(brokerName string, address string, messageType message.Type) error
+	Unsubscribe(brokerName string, address string, messageType message.Type) error
 	SendMessage(brokerName string, payload string, messageType message.Type) error
+	EnableConsumer(brokerName string, consumerIP string, messageType message.Type) error
+	GetBroker(brokerName string, messageType message.Type) (broker.Broker, error)
 }
 
 type momService struct {
-	topics      map[string]*topic.Topic
-	queues      map[string]*queue.Queue
-	connections map[string]*connection
-	config 	cluster.Config
+	topics      map[string]*broker.Topic
+	queues      map[string]*broker.Queue
+	connections []string
+	Config      cluster.Config
 }
 
 func NewMomService() MomService {
-	return &momService{
-		queues:      map[string]*queue.Queue{},
-		connections: map[string]*connection{},
-		config: cluster.NewConfig(),
+	m := &momService{
+		queues:      map[string]*broker.Queue{},
+		connections: []string{},
+		Config:      cluster.NewConfig(),
+	}
+	if m.Config.IsLeader() {
+		m.StartConsumption()
+	}
+	return m
+}
+
+func (s *momService) StartConsumption() {
+	for _, queue := range s.queues {
+		queue.Consume()
+	}
+	for _, topic := range s.topics {
+		topic.Consume()
 	}
 }
 
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
-	conn := &connection{
-		id:      n_client,
-		address: address,
-	}
-
-	n_client += 1
-
 	s.connections[address] = conn
 }
 
@@ -53,69 +64,88 @@ func (s *momService) DeleteConnection(address string) {
 	delete(s.connections, address)
 }
 
-// Get a list of all active connections
-func (s *momService) GetConnections() [][]string {
-	conns := make([][]string, len(s.connections))
-
-	for key, value := range s.connections {
-		conns = append(conns, []string{fmt.Sprint(value.id), key})
-	}
-
-	return conns
-}
-
 // Create a new queue and add it to the list of active queues
-func (s *momService) CreateQueue(name string, creator_ip string) {
-	queue := queue.NewQueue(creator_ip)
+func (s *momService) CreateQueue(name string, clientIP string) {
+	queue := broker.NewQueue(clientIP)
 	s.queues[name] = queue
 }
 
 // Delete the queue with the given name
-func (s *momService) DeleteQueue(name string,  user_ip string) {
-	if user_ip != s.queues[name].Creator {
-		return
+func (s *momService) DeleteQueue(name string, clientIp string) error {
+	if clientIp != s.queues[name].Creator {
+		return ErrBrokerNotFound
 	}
 	delete(s.queues, name)
+	return nil
+}
+
+// Create a new queue and add it to the list of active queues
+func (s *momService) CreateTopic(name string, clientIP string) {
+	topic := broker.NewTopic(clientIP)
+	s.queues[name] = topic
+}
+
+// Delete the queue with the given name
+func (s *momService) DeleteTopic(name string, clientIp string) error {
+	if clientIp != s.topics[name].Creator {
+		return ErrBrokerNotFound
+	}
+	delete(s.topics, name)
+	return nil
 }
 
 // Add a subscriber to a queue
-func (s *momService) Subscribe(queueName string, address string) {
-	for name, queue := range s.queues {
-		if name == queueName {
-			queue.AddConsumer(address)
-			break
-		}
+func (s *momService) Subscribe(brokerName string, address string, messageType message.Type) error {
+	broker, err := s.GetBroker(brokerName, messageType)
+	if err != nil {
+		return err
 	}
+	broker.AddConsumer(address)
 }
 
 // Remove a subscriber from a queue
-func (s *momService) Unsubscribe(queueName string, address string) {
-	for name, queue := range s.queues {
-		if name == queueName {
-			queue.RemoveConsumer(address)
-			break
-		}
+func (s *momService) Unsubscribe(brokerName string, address string, messageType message.Type) error {
+	broker, err := s.GetBroker(brokerName, messageType)
+	if err != nil {
+		return err
 	}
+	broker.RemoveConsumer(address)
+	return nil
 }
 
 // Send a message to a queue or topic
 func (s *momService) SendMessage(brokerName string, payload string, messageType message.Type) error {
+	broker, err := s.GetBroker(brokerName, messageType)
+	if err != nil {
+		return err
+	}
+	// sincronizar con replicas
+	broker.AddMessage(payload)
+	return nil
+}
+
+func (s *momService) EnableConsumer(brokerName string, consumerIP string, messageType message.Type) error {
+	broker, err := s.GetBroker(brokerName, messageType)
+	if err != nil {
+		return err
+	}
+	broker.EnableConsumer(consumerIP)
+	return nil
+}
+
+func (s *momService) GetBroker(brokerName string, messageType message.Type) (broker.Broker, error) {
 	if messageType == message.Type_QUEUE {
 		for name, queue := range s.queues {
 			if name == brokerName {
-				// TODO sync with replicas
-				queue.AddMessage(payload)
-				break
+				return queue, nil
 			}
 		}
 	} else {
 		for name, topic := range s.topics {
 			if name == brokerName {
-				// TODO sync with replicas
-				topic.AddMessage(payload)
-				break
+				return topic, nil
 			}
 		}
 	}
-	return nil
+	return nil, ErrBrokerNotFound
 }
