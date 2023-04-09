@@ -16,12 +16,23 @@ type config struct {
 	timeout  int64
 	interval time.Duration
 	selfIP string
+	gatewayConn *grpc.ClientConn
 }
 
-func NewConfig() config {
+func NewConfig(solver_ip ) config {
 	// Create config
 	// Decides new master!
-	return config{isVoting: false, uptime: time.Now().UnixNano(), interval: 2*time.Second}
+	return config {
+		isVoting: false, 
+		uptime: time.Now().UnixNano(), 
+		peerIPs: []string{},
+		peerConnections: [] *grpc.ClientConn{},
+		leaderIP: "", // TODO
+		timeout: time.Now().UnixNano(), // Revisar
+		interval: 2*time.Second,
+		selfIP: "", // TODO
+		gatewayConn: nil, // TODO
+	}
 }
 
 func (c *config) addRPC() {

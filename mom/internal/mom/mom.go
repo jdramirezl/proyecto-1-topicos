@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mom/internal/proto/message"
 	"mom/internal/queue"
+	"mom/internal/cluster"
 )
 
 var (
@@ -24,12 +25,14 @@ type momService struct {
 	topics      map[string]*topic.Topic
 	queues      map[string]*queue.Queue
 	connections map[string]*connection
+	config 	cluster.Config
 }
 
 func NewMomService() MomService {
 	return &momService{
 		queues:      map[string]*queue.Queue{},
 		connections: map[string]*connection{},
+		config: cluster.NewConfig(),
 	}
 }
 
@@ -62,13 +65,16 @@ func (s *momService) GetConnections() [][]string {
 }
 
 // Create a new queue and add it to the list of active queues
-func (s *momService) CreateQueue(name string) {
-	queue := queue.NewQueue()
+func (s *momService) CreateQueue(name string, creator_ip string) {
+	queue := queue.NewQueue(creator_ip)
 	s.queues[name] = queue
 }
 
 // Delete the queue with the given name
-func (s *momService) DeleteQueue(name string) {
+func (s *momService) DeleteQueue(name string,  user_ip string) {
+	if user_ip != s.queues[name].Creator {
+		return
+	}
 	delete(s.queues, name)
 }
 
