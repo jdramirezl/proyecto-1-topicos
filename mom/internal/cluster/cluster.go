@@ -1,13 +1,17 @@
 package cluster
 
 import (
+	cluster "mom/internal/proto/cluster"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 type config struct {
 	isVoting bool
 	uptime   int64
 	peerIPs  []string
+	peerConnections [] *grpc.ClientConn
 	leaderIP string
 	timeout  int64
 	interval time.Duration
@@ -18,6 +22,10 @@ func NewConfig() config {
 	// Create config
 	// Decides new master!
 	return config{isVoting: false, uptime: time.Now().UnixNano(), interval: 2*time.Second}
+}
+
+func (c *config) addRPC() {
+	// Add RPC methods
 }
 
 
@@ -67,28 +75,36 @@ func (c *config) startElection() {
 }
 
 // Comunicacion in-cluster
-func join() {
+func (c *config) join() {
 	// Nodo nuevo envia IP a Nodo maestro
 	// tambien a Coordinator
 	// If voting ? not join!!
+	for _, conn := range c.peerConnections {
+		client := cluster.NewClusterServiceClient(conn)
+		
+		req := cluster.PeerRequest{Ip: c.selfIP}
+		
+		client.AddPeer(context.Background(), &req)
+	}
+
 }
 
-func heartbeat() {
+func (c *config) heartbeat() {
 	// Nodo en control envia heartbeat a los esclavos
 	// Si esclavos no tienen heartbeat del control, hacen consenso
 }
 
-func caregiver() {
+func (c *config) caregiver() {
 	// Check TTL of slaves, remove ones with TTL from config
 	// TODO: Read TTL
 }
 
-func catchmeup() {
+func (c *config) catchmeup() {
 	// Llamado en JOIN
 	// SOlicitar la info
 }
 
-func catchyouup() {
+func (c *config) catchyouup() {
 	// Llamado desde el main si nos solicitan info
 	// Goroutine????
 }

@@ -17,5 +17,18 @@ func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *mess
 }
 
 func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMessageClient) error {
+	go func() {
+		for {
+
+			request, err := stream.Recv()
+			if err != nil {
+				return err
+			}
+		}
+	}()
+
+	go func() {
+
+	}()
 	return nil
 }

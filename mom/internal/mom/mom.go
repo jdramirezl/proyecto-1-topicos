@@ -8,7 +8,6 @@ import (
 
 var (
 	n_client int64 = 0
-	// mom      *MomService
 )
 
 type connection struct {
