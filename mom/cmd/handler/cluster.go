@@ -23,7 +23,7 @@ func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *proto_clus
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
+func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_cluster.SystemRequest) (*empty.Empty, error) {
 
 	Type := req.Type
 	Name := req.Name
@@ -38,28 +38,29 @@ func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_c
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
+func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*empty.Empty, error) {
 	Type := req.Type
 	Name := req.Name
 	Creator := req.Ip
 
+	var final message.Type
 	if Type == 0 {
-		Type = message.Type_QUEUE
+		final = message.Type_QUEUE
 	} else {
-		Type = message.Type_TOPIC
+		final = message.Type_TOPIC
 	}
 
-	c.momService.Subscribe(Name, Creator, Type)
+	c.momService.Subscribe(Name, Creator, final)
 
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) RemoveSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
+func (c *ClusterService) RemoveSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*empty.Empty, error) {
 	Type := req.Type
 	Name := req.Name
 	Creator := req.Ip
 
-	var system message.Type
+	var final message.Type
 	if Type == 0 {
 		final = message.Type_QUEUE
 	} else {
