@@ -4,7 +4,7 @@ import (
 	"context"
 
 	proto_cluster "mom/internal/proto/cluster"
-	"mom/internal/proto/message"
+	message "mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )
@@ -41,7 +41,7 @@ func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_c
 func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
 	Type := req.Type
 	Name := req.Name
-	Creator := req.Creator
+	Creator := req.Ip
 
 	if Type == 0 {
 		Type = message.Type_QUEUE
@@ -57,26 +57,27 @@ func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.S
 func (c *ClusterService) RemoveSubscriber(ctx context.Context, req *proto_cluster.SubscriberRequest) (*files.ConsumeMessageResponse, error) {
 	Type := req.Type
 	Name := req.Name
-	Creator := req.Creator
+	Creator := req.Ip
 
+	var system message.Type
 	if Type == 0 {
-		Type = message.Type_QUEUE
+		final = message.Type_QUEUE
 	} else {
-		Type = message.Type_TOPIC
+		final = message.Type_TOPIC
 	}
 
-	c.momService.Unsubscribe(Name, Creator, Type)
+	c.momService.Unsubscribe(Name, Creator, final)
 
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) AddConnection(ctx context.Context, _ *proto_cluster.ConnectionRequest) (*files.ConsumeMessageResponse, error) {
+func (c *ClusterService) AddConnection(ctx context.Context, req *proto_cluster.ConnectionRequest) (*empty.Empty, error) {
 	connectionIp := req.Ip
 	c.momService.CreateConnection(connectionIp)
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) RemoveConnection(ctx context.Context, _ *proto_cluster.ConnectionRequest) (*files.ConsumeMessageResponse, error) {
+func (c *ClusterService) RemoveConnection(ctx context.Context, req *proto_cluster.ConnectionRequest) (*empty.Empty, error) {
 	connectionIp := req.Ip
 	c.momService.DeleteConnection(connectionIp)
 	return &empty.Empty{}, nil
@@ -102,6 +103,8 @@ func (c *ClusterService) Heartbeat(ctx context.Context, emp *empty.Empty) (*empt
 
 func (c *ClusterService) ElectLeader(ctx context.Context, emp *empty.Empty) (*proto_cluster.ElectLeaderResponse, error) {
 	uptime := c.momService.GetConfig().GetUptime()
-	res := p
-	return
+	res := &proto_cluster.ElectLeaderResponse{
+		Uptime: uptime,
+	}
+	return res, nil
 }

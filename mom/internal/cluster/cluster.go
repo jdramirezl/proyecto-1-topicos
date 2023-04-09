@@ -49,7 +49,7 @@ func (c *Config) IsLeader() bool {
 
 // ---------- Add a peer ----------
 // Receiver
-func (c *Config) addPeer(peerIP string) {
+func (c *Config) AddPeer(peerIP string) {
 	c.peerIPs = append(c.peerIPs, peerIP)
 	peerConn, _ := grpc.Dial(peerIP)
 	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
@@ -76,7 +76,7 @@ func (c *Config) join(ip string) {
 // ---------- Remove a peer ----------
 
 // Receiver
-func (c *Config) removePeer(peerIP string) {
+func (c *Config) RemovePeer(peerIP string) {
 	var newPeerIPs []string
 	for _, val := range c.peerIPs {
 		if val == peerIP {
@@ -133,7 +133,7 @@ func (c *Config) watchPeers() {
 }
 
 // Receiver
-func (c *Config) refreshTimeout() {
+func (c *Config) RefreshTimeout() {
 	c.timeout = time.Now().UnixNano() // TODO
 }
 

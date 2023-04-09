@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"mom/internal/proto/cluster"
 	"mom/internal/proto/message"
 	"mom/pkg/internal/connection"
@@ -11,8 +10,6 @@ import (
 type Client struct {
 	messageClient message.MessageServiceClient
 	clusterClient cluster.ClusterServiceClient
-	ready         chan bool
-	isConsuming   bool
 }
 
 func NewClient(host, port string) Client {
@@ -38,27 +35,13 @@ func (c *Client) PublishTopic(payload string, queue string) error {
 	return err
 }
 
-func (c *Client) Subscribe(queue string) (chan string, error) {
-	request := message.ConsumeMessageRequest{Name: queue, Type: message.Type_QUEUE}
+func (c *Client) SubscribeQueue(queue string) chan string {
+	// request := message.
 	client, err := c.messageClient.ConsumeMessage(context.Background(), &request)
-	c.isConsuming = true
-	if err != nil {
-		return nil, err
-	}
-	ret := make(chan string)
 	go func() {
 		for {
-			request := message.ConsumeMessageRequest{Name: queue, Type: message.Type_QUEUE}
 			msg, err := client.Recv()
 		}
 	}()
-	return ret, nil
-}
-
-func (c *Client) Ready() error {
-	if !c.isConsuming {
-		return fmt.Errorf("client is not consuming")
-	}
-	c.ready <- true
-	return nil
+	return err
 }

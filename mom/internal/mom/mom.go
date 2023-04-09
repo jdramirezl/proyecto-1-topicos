@@ -25,13 +25,14 @@ type MomService interface {
 	SendMessage(brokerName string, payload string, messageType message.Type) error
 	EnableConsumer(brokerName string, consumerIP string, messageType message.Type) error
 	GetBroker(brokerName string, messageType message.Type) (broker.Broker, error)
+	GetConfig() *cluster.Config
 }
 
 type momService struct {
 	topics      map[string]*broker.Topic
 	queues      map[string]*broker.Queue
 	connections []string
-	Config      cluster.Config
+	Config      *cluster.Config
 }
 
 func NewMomService() MomService {
@@ -44,6 +45,10 @@ func NewMomService() MomService {
 		m.StartConsumption()
 	}
 	return m
+}
+
+func (s *momService) GetConfig() *cluster.Config {
+	return s.Config
 }
 
 func (s *momService) StartConsumption() {
