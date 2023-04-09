@@ -10,9 +10,10 @@ type Queue struct {
 	Consumers       []consumer.Consumer
 	CurrentConsumer int
 	ConsumerMap     map[string] chan string // Why chan string? does it matter?
+	Creator 	   string
 }
 
-func NewQueue() *Queue {
+func NewQueue(creator_ip string) *Queue {
 	message_queue := linked_list.NewLinkedList()
 
 	q := Queue{
@@ -20,6 +21,7 @@ func NewQueue() *Queue {
         Consumers: []consumer.Consumer{},
         CurrentConsumer: -1,
         ConsumerMap: map[string] chan string {},
+		Creator: creator_ip,
     }
 
 	go q.consume()
