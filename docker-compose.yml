@@ -14,19 +14,49 @@ services:
     build:
       context: ./gateway
     command: air
+    environment:
+      - MOM_HOST=resolver
+      - MOM_PORT=8080
     env_file:
       - ./gateway/.env
     networks:
       - proyecto-1
 
-  mom:
+  resolver:
     build:
       context: ./mom
     command: air
     env_file:
       - ./mom/.env
     networks:
-      - reto-2
+      - proyecto-1
+
+  leader:
+    build:
+      context: ./mom
+    command: air
+    env_file:
+      - ./mom/.env
+    networks:
+      - proyecto-1
+
+  follower-1:
+    build:
+      context: ./mom
+    command: sleep 15s && air
+    env_file:
+      - ./mom/.env
+    networks:
+      - proyecto-1
+
+  follower-2:
+    build:
+      context: ./mom
+    command: sleep 30s && air
+    env_file:
+      - ./mom/.env
+    networks:
+      - proyecto-1
 
 networks:
   proyecto-1:

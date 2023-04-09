@@ -16,10 +16,13 @@ type MomService interface {
 	StartConsumption()
 	CreateConnection(address string)
 	DeleteConnection(address string)
+	GetConnections() []string
 	CreateTopic(name string, clientIP string)
 	DeleteTopic(name string, clientIp string) error
+	GetTopics() map[string]*broker.Topic
 	CreateQueue(name string, clientIP string)
 	DeleteQueue(name string, clientIp string) error
+	GetQueues() map[string]*broker.Queue
 	Subscribe(brokerName string, address string, messageType message.Type) error
 	Unsubscribe(brokerName string, address string, messageType message.Type) error
 	SendMessage(brokerName string, payload string, messageType message.Type) error
@@ -47,6 +50,18 @@ func NewMomService() MomService {
 	return m
 }
 
+func (s *momService) GetQueues() map[string]*broker.Queue {
+	return s.queues
+}
+
+func (s *momService) GetTopics() map[string]*broker.Topic {
+	return s.topics
+}
+
+func (s *momService) GetConnections() []string {
+	return s.connections
+}
+
 func (s *momService) GetConfig() *cluster.Config {
 	return s.Config
 }
@@ -62,12 +77,21 @@ func (s *momService) StartConsumption() {
 
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
-	s.connections[address] = conn
+	s.connections = append(s.connections, address)
 }
 
 // Delete a connection from the list of active connections
-func (s *momService) DeleteConnection(address string) {
-	delete(s.connections, address)
+func (s *momService) DeleteConnection(deleteAddress string) {
+
+	newConnections := []string{}
+	for _, conn := range s.connections {
+		if conn == deleteAddress {
+			continue
+		}
+		newConnections = append(newConnections, conn)
+	}
+
+	s.connections = newConnections
 }
 
 // Create a new queue and add it to the list of active queues
@@ -88,7 +112,7 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 // Create a new queue and add it to the list of active queues
 func (s *momService) CreateTopic(name string, clientIP string) {
 	topic := broker.NewTopic(clientIP)
-	s.queues[name] = topic
+	s.topics[name] = topic
 }
 
 // Delete the queue with the given name
@@ -107,6 +131,8 @@ func (s *momService) Subscribe(brokerName string, address string, messageType me
 		return err
 	}
 	broker.AddConsumer(address)
+
+	return nil
 }
 
 // Remove a subscriber from a queue

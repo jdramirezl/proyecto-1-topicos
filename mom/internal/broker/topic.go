@@ -13,17 +13,29 @@ type Topic struct {
 	Creator         string
 }
 
-func NewTopic(creator_ip string) Broker {
+func NewTopic(creator_ip string) *Topic {
 	messageList := linked_list.NewLinkedList()
 
-	q := Topic{
+	t := Topic{
 		Messages:    &messageList,
 		Consumers:   []consumer.Consumer{},
 		ConsumerMap: map[string]chan string{},
 		Creator:     creator_ip,
 	}
 
-	return &q
+	return &t
+}
+
+func (t *Topic) GetCreator() string {
+	return t.Creator
+}
+
+func (t *Topic) GetMessages() *linked_list.LinkedList {
+	return t.Messages
+}
+
+func (t *Topic) GetConsumers() *[]consumer.Consumer {
+	return &t.Consumers
 }
 
 func (q *Topic) Consume() {

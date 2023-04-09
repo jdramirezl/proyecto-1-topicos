@@ -4,6 +4,7 @@ import (
 	"mom/internal/mom"
 	"mom/internal/proto/cluster"
 	"mom/internal/proto/message"
+	"mom/internal/proto/resolver"
 )
 
 type MessageService struct {
@@ -16,9 +17,15 @@ type ClusterService struct {
 	momService mom.MomService
 }
 
+type ResolverService struct {
+	resolver.UnimplementedResolverServiceServer
+	momService mom.MomService
+}
+
 type Handler struct {
-	QueueService   *MessageService
-	ClusterService *ClusterService
+	QueueService    *MessageService
+	ClusterService  *ClusterService
+	ResolverService *ResolverService
 }
 
 func NewHandler(momService mom.MomService) *Handler {

@@ -13,7 +13,7 @@ type Queue struct {
 	Creator         string
 }
 
-func NewQueue(creator_ip string) Broker {
+func NewQueue(creator_ip string) *Queue {
 	messageList := linked_list.NewLinkedList()
 
 	q := Queue{
@@ -25,6 +25,18 @@ func NewQueue(creator_ip string) Broker {
 	}
 
 	return &q
+}
+
+func (q *Queue) GetCreator() string {
+	return q.Creator
+}
+
+func (q *Queue) GetMessages() *linked_list.LinkedList {
+	return q.Messages
+}
+
+func (q *Queue) GetConsumers() *[]consumer.Consumer {
+	return &q.Consumers
 }
 
 func (q *Queue) Consume() {

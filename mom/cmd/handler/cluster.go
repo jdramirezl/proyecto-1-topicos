@@ -85,7 +85,14 @@ func (c *ClusterService) RemoveConnection(ctx context.Context, req *proto_cluste
 }
 
 func (c *ClusterService) AddPeer(ctx context.Context, req *proto_cluster.PeerRequest) (*empty.Empty, error) {
-	c.momService.GetConfig().AddPeer(req.Ip)
+	conf := c.momService.GetConfig()
+	mom := c.momService
+	conf.AddPeer(req.Ip)
+
+	if conf.IsLeader() {
+		conf.CatchYouUp(mom.GetConnections(), mom.GetQueues(), mom.GetTopics())
+	}
+
 	return &empty.Empty{}, nil
 }
 
@@ -93,9 +100,6 @@ func (c *ClusterService) RemovePeer(ctx context.Context, req *proto_cluster.Peer
 	c.momService.GetConfig().RemovePeer(req.Ip)
 	return &empty.Empty{}, nil
 }
-
-// func (c *ClusterService) NewMaster(ctx context.Context, _ *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-// }
 
 func (c *ClusterService) Heartbeat(ctx context.Context, emp *empty.Empty) (*empty.Empty, error) {
 	c.momService.GetConfig().RefreshTimeout()

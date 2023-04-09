@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: proto/cluster.proto
+// source: mom/proto/cluster.proto
 
 package cluster
 
@@ -29,9 +29,8 @@ type ClusterServiceClient interface {
 	RemoveSubscriber(ctx context.Context, in *SubscriberRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	AddConnection(ctx context.Context, in *ConnectionRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemoveConnection(ctx context.Context, in *ConnectionRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	AddPeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*PeerResponse, error)
+	AddPeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemovePeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	NewMaster(ctx context.Context, in *MasterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	Heartbeat(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
 	ElectLeader(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ElectLeaderResponse, error)
 }
@@ -98,8 +97,8 @@ func (c *clusterServiceClient) RemoveConnection(ctx context.Context, in *Connect
 	return out, nil
 }
 
-func (c *clusterServiceClient) AddPeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*PeerResponse, error) {
-	out := new(PeerResponse)
+func (c *clusterServiceClient) AddPeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/ClusterService/AddPeer", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -110,15 +109,6 @@ func (c *clusterServiceClient) AddPeer(ctx context.Context, in *PeerRequest, opt
 func (c *clusterServiceClient) RemovePeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/ClusterService/RemovePeer", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *clusterServiceClient) NewMaster(ctx context.Context, in *MasterRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/ClusterService/NewMaster", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,9 +143,8 @@ type ClusterServiceServer interface {
 	RemoveSubscriber(context.Context, *SubscriberRequest) (*empty.Empty, error)
 	AddConnection(context.Context, *ConnectionRequest) (*empty.Empty, error)
 	RemoveConnection(context.Context, *ConnectionRequest) (*empty.Empty, error)
-	AddPeer(context.Context, *PeerRequest) (*PeerResponse, error)
+	AddPeer(context.Context, *PeerRequest) (*empty.Empty, error)
 	RemovePeer(context.Context, *PeerRequest) (*empty.Empty, error)
-	NewMaster(context.Context, *MasterRequest) (*empty.Empty, error)
 	Heartbeat(context.Context, *empty.Empty) (*empty.Empty, error)
 	ElectLeader(context.Context, *empty.Empty) (*ElectLeaderResponse, error)
 	mustEmbedUnimplementedClusterServiceServer()
@@ -183,14 +172,11 @@ func (UnimplementedClusterServiceServer) AddConnection(context.Context, *Connect
 func (UnimplementedClusterServiceServer) RemoveConnection(context.Context, *ConnectionRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveConnection not implemented")
 }
-func (UnimplementedClusterServiceServer) AddPeer(context.Context, *PeerRequest) (*PeerResponse, error) {
+func (UnimplementedClusterServiceServer) AddPeer(context.Context, *PeerRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPeer not implemented")
 }
 func (UnimplementedClusterServiceServer) RemovePeer(context.Context, *PeerRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePeer not implemented")
-}
-func (UnimplementedClusterServiceServer) NewMaster(context.Context, *MasterRequest) (*empty.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewMaster not implemented")
 }
 func (UnimplementedClusterServiceServer) Heartbeat(context.Context, *empty.Empty) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
@@ -355,24 +341,6 @@ func _ClusterService_RemovePeer_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ClusterService_NewMaster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MasterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClusterServiceServer).NewMaster(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ClusterService/NewMaster",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClusterServiceServer).NewMaster(ctx, req.(*MasterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ClusterService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
@@ -449,10 +417,6 @@ var ClusterService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ClusterService_RemovePeer_Handler,
 		},
 		{
-			MethodName: "NewMaster",
-			Handler:    _ClusterService_NewMaster_Handler,
-		},
-		{
 			MethodName: "Heartbeat",
 			Handler:    _ClusterService_Heartbeat_Handler,
 		},
@@ -462,5 +426,5 @@ var ClusterService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/cluster.proto",
+	Metadata: "mom/proto/cluster.proto",
 }

@@ -1,0 +1,13 @@
+syntax = "proto3";
+option go_package = "proto/resolver/;resolver";
+
+import "google/protobuf/empty.proto";
+
+message MasterMessage {
+    string ip = 1;
+}
+
+service ResolverService {
+    rpc NewMaster (MasterMessage) returns (google.protobuf.Empty){};
+    rpc GetMaster (google.protobuf.Empty) returns (MasterMessage){};
+}

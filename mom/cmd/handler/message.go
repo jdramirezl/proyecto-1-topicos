@@ -28,8 +28,6 @@ func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *mess
 }
 
 func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMessageServer) error {
-	errorChan := make(chan error)
-
 	peer, ok := peer.FromContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("failed to extract peer from context")
@@ -40,41 +38,25 @@ func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMes
 		return fmt.Errorf("failed to split host and port: %v", err)
 	}
 
-	go func() {
-		isFirst := true
-		for {
-			request, err := stream.Recv()
-			if err != nil {
-				errorChan <- err
-				return
-			}
-
-			if isFirst {
-				isFirst = false
-				go func() {
-					broker, err := q.momService.GetBroker(request.Name, request.Type)
-					if err != nil {
-						errorChan <- err
-						return
-					}
-					for {
-						payload := <-broker.GetConsumerChannel(consumerIP)
-						response := &message.ConsumeMessageResponse{Payload: payload}
-						// sincronizar con replicas
-						err = stream.Send(response)
-						if err != nil {
-							errorChan <- err
-							return
-						}
-					}
-				}()
-			}
-			err = q.momService.EnableConsumer(request.Name, consumerIP, request.Type)
-			if err != nil {
-				errorChan <- err
-				return
-			}
+	for {
+		request, err := stream.Recv()
+		if err != nil {
+			return err
 		}
-	}()
-	return <-errorChan
+		err = q.momService.EnableConsumer(request.Name, consumerIP, request.Type)
+		if err != nil {
+			return err
+		}
+		broker, err := q.momService.GetBroker(request.Name, request.Type)
+		if err != nil {
+			return err
+		}
+		payload := <-broker.GetConsumerChannel(consumerIP)
+		response := &message.ConsumeMessageResponse{Payload: payload}
+		// sincronizar con replicas
+		err = stream.Send(response)
+		if err != nil {
+			return err
+		}
+	}
 }

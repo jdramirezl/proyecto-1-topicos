@@ -2,14 +2,18 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"mom/internal/proto/cluster"
 	"mom/internal/proto/message"
 	"mom/pkg/internal/connection"
 )
 
 type Client struct {
-	messageClient message.MessageServiceClient
-	clusterClient cluster.ClusterServiceClient
+	messageClient      message.MessageServiceClient
+	clusterClient      cluster.ClusterServiceClient
+	isConsuming        bool
+	brokerName         string
+	queueMessageClient message.MessageService_ConsumeMessageClient
 }
 
 func NewClient(host, port string) Client {
@@ -35,13 +39,31 @@ func (c *Client) PublishTopic(payload string, queue string) error {
 	return err
 }
 
-func (c *Client) SubscribeQueue(queue string) chan string {
-	// request := message.
-	client, err := c.messageClient.ConsumeMessage(context.Background(), &request)
-	go func() {
-		for {
-			msg, err := client.Recv()
-		}
-	}()
-	return err
+func (c *Client) SubscribeQueue(queueName string) error {
+	client, err := c.messageClient.ConsumeMessage(context.Background())
+	c.brokerName = queueName
+	c.queueMessageClient = client
+	c.isConsuming = true
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) ReceiveQueueMessage() (string, error) {
+	if !c.isConsuming {
+		return "", fmt.Errorf("client is not consuming")
+	}
+
+	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.Type_QUEUE}
+	err := c.queueMessageClient.Send(&request)
+	if err != nil {
+		return "", nil
+	}
+	msg, err := c.queueMessageClient.Recv()
+	if err != nil {
+		return "", nil
+	}
+	return msg.Payload, nil
 }

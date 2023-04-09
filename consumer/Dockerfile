@@ -12,4 +12,3 @@ RUN curl -fLo install.sh https://raw.githubusercontent.com/cosmtrek/air/master/i
 COPY . .
 
 RUN go mod download
-
