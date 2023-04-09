@@ -1,6 +1,5 @@
 package linked_list
 
-
 type LinkedList struct {
 	Head   *node
 	Length int
@@ -11,10 +10,9 @@ type node struct {
 	Next *node
 }
 
-
 func NewLinkedList() LinkedList {
-	return LinkedList {
-		Head: nil,
+	return LinkedList{
+		Head:   nil,
 		Length: 0,
 	}
 }

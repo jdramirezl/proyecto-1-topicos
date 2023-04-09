@@ -1,21 +1,14 @@
-
 package consumer
 
-
-
-import (
-    "github.com/google/uuid"
-)
-
+import "github.com/google/uuid"
 
 type Consumer struct {
-	ID string	
+	ID        string
 	Available bool
-	IP string
+	IP        string
 }
-
 
 func NewConsumer(address string) Consumer {
 	id := uuid.New().String()
-	return Consumer{ID: id, Available: true, IP: address}		
+	return Consumer{ID: id, Available: true, IP: address}
 }

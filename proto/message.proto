@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "proto/queue/;queue";
+option go_package = "proto/message/;message";
 
 import "google/protobuf/empty.proto";
 
@@ -25,10 +25,9 @@ message ConsumeMessageResponse {
     string payload = 1;
 }
 
-service QueueService {
+service MessageService {
 
     rpc AddMessage(MessageRequest) returns (google.protobuf.Empty) {};
     rpc RemoveMessage(MessageRequest) returns (google.protobuf.Empty) {};
-
     rpc ConsumeMessage(stream ConsumeMessageRequest) returns (stream ConsumeMessageResponse) {};
 }

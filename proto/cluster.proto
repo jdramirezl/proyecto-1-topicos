@@ -1,0 +1,61 @@
+syntax = "proto3";
+option go_package = "proto/cluster/;cluster";
+
+import "google/protobuf/empty.proto";
+
+enum Type {
+    QUEUE = 0;
+    TOPIC = 1;
+}
+
+message SystemRequest {
+    string id = 1;
+    string name = 2;
+    Type type = 3;
+    string creator = 4;
+}
+
+message SubscriberRequest {
+    string name = 1;
+    Type type = 2;
+    string ip = 3;
+}
+
+message PeerRequest {
+    string ip = 1;
+}
+
+message ConnectionRequest {
+    string ip = 1;
+}
+
+message MasterRequest {
+    string ip = 1;
+}
+
+message PeerResponse {
+    repeated string ip = 1;
+}
+
+message electLeaderResponse {
+    int64 uptime = 1;
+}
+
+service ClusterService {
+    rpc AddMessagingSystem(SystemRequest) returns (google.protobuf.Empty) {};
+    rpc RemoveMessagingSystem(SystemRequest) returns (google.protobuf.Empty) {};
+
+    rpc AddSubscriber(SubscriberRequest) returns (google.protobuf.Empty) {};
+    rpc RemoveSubscriber(SubscriberRequest) returns (google.protobuf.Empty) {};
+
+    rpc AddConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
+    rpc RemoveConnection(ConnectionRequest) returns (google.protobuf.Empty) {};
+
+    rpc AddPeer(PeerRequest) returns (PeerResponse) {};
+    rpc RemovePeer(PeerRequest) returns (google.protobuf.Empty) {};
+
+    rpc NewMaster (MasterRequest) returns (google.protobuf.Empty){};
+    rpc Heartbeat (google.protobuf.Empty) returns (google.protobuf.Empty){};
+    
+    rpc ElectLeader (google.protobuf.Empty) returns (electLeaderResponse){};
+}

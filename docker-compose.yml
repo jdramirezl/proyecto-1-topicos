@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  consumer:
+    build:
+      context: ./consumer
+    command: air
+    env_file:
+      - ./consumer/.env
+    networks:
+      - proyecto-1
+
+  gateway:
+    build:
+      context: ./gateway
+    command: air
+    env_file:
+      - ./gateway/.env
+    networks:
+      - proyecto-1
+
+  mom:
+    build:
+      context: ./mom
+    command: air
+    env_file:
+      - ./mom/.env
+    networks:
+      - reto-2
+
+networks:
+  proyecto-1:
