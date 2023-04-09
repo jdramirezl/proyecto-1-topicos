@@ -4,11 +4,12 @@ import (
 	"context"
 
 	proto_cluster "mom/internal/proto/cluster"
+	"mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
-func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *cluster.SystemRequest) (*empty.Empty, error) {
+func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *proto_cluster.SystemRequest) (*empty.Empty, error) {
 	Type := req.Type
 	Name := req.Name
 	Creator := req.Creator
@@ -81,25 +82,26 @@ func (c *ClusterService) RemoveConnection(ctx context.Context, _ *proto_cluster.
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) AddPeer(ctx context.Context, req *cluster.PeerRequest) (*empty.Empty, error) {
-	c.momService.Config.addPeer(req.Ip)
+func (c *ClusterService) AddPeer(ctx context.Context, req *proto_cluster.PeerRequest) (*empty.Empty, error) {
+	c.momService.GetConfig().AddPeer(req.Ip)
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) RemovePeer(ctx context.Context, req *cluster.PeerRequest) (*empty.Empty, error) {
-	c.momService.Config.removePeer(req.Ip)
+func (c *ClusterService) RemovePeer(ctx context.Context, req *proto_cluster.PeerRequest) (*empty.Empty, error) {
+	c.momService.GetConfig().RemovePeer(req.Ip)
 	return &empty.Empty{}, nil
 }
 
 // func (c *ClusterService) NewMaster(ctx context.Context, _ *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
 // }
 
-func (c *ClusterService) Heartbeat(ctx context.Context) (*empty.Empty, error) {
-	c.momService.Config.refreshTimeout()
+func (c *ClusterService) Heartbeat(ctx context.Context, emp *empty.Empty) (*empty.Empty, error) {
+	c.momService.GetConfig().RefreshTimeout()
 	return &empty.Empty{}, nil
 }
 
-func (c *ClusterService) ElectLeader(ctx context.Context, _ *proto_cluster.ConsumeMessageRequest) (*files.ConsumeMessageResponse, error) {
-
+func (c *ClusterService) ElectLeader(ctx context.Context, emp *empty.Empty) (*proto_cluster.ElectLeaderResponse, error) {
+	uptime := c.momService.GetConfig().GetUptime()
+	res := p
 	return
 }

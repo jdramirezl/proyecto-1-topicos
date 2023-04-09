@@ -1,4 +1,4 @@
-package broker;
+package broker
 
 import (
 	"mom/internal/consumer"
@@ -9,25 +9,25 @@ type Queue struct {
 	Messages        *linked_list.LinkedList
 	Consumers       []consumer.Consumer
 	CurrentConsumer int
-	ConsumerMap     map[string] chan string // Why chan string? does it matter?
-	Creator 	   string
+	ConsumerMap     map[string]chan string // Why chan string? does it matter?
+	Creator         string
 }
 
 func NewQueue(creator_ip string) Broker {
 	messageList := linked_list.NewLinkedList()
 
 	q := Queue{
-        Messages: &messageList,
-        Consumers: []consumer.Consumer{},
-        CurrentConsumer: -1,
-        ConsumerMap: map[string] chan string {},
-		Creator: creator_ip,
-    }
+		Messages:        &messageList,
+		Consumers:       []consumer.Consumer{},
+		CurrentConsumer: -1,
+		ConsumerMap:     map[string]chan string{},
+		Creator:         creator_ip,
+	}
 
 	return &q
 }
 
-func (q *Queue) Consume(){
+func (q *Queue) Consume() {
 	for {
 		if q.CurrentConsumer == -1 {
 			continue
@@ -65,6 +65,7 @@ func (q *Queue) AddConsumer(address string) chan string {
 	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.IP] = channel
 
+	q.Consumers = append(q.Consumers, cons)
 	q.roundRobin() // When current consumer is -1
 
 	return channel
@@ -75,21 +76,33 @@ func (q *Queue) RemoveConsumer(address string) {
 	if len(q.ConsumerMap) == 0 {
 		q.CurrentConsumer = -1
 	}
+	var newConsumers []consumer.Consumer
+	for _, consumer := range q.Consumers {
+		if consumer.IP == address {
+			continue
+		}
+		newConsumers = append(newConsumers, consumer)
+	}
+	q.Consumers = newConsumers
 }
 
-func (q *Queue) AddMessage(message string){
+func (q *Queue) AddMessage(message string) {
 	q.Messages.Add(message)
 }
 
-func (q *Queue) PopMessage(){
+func (q *Queue) PopMessage() {
 	q.Messages.Pop()
 }
 
-func (q *Queue) EnableConsumer(consumerIP string){
-	for _, consumer := q.Consumers {
+func (q *Queue) EnableConsumer(consumerIP string) {
+	for _, consumer := range q.Consumers {
 		if consumer.IP == consumerIP {
 			consumer.Available = true
 			return
 		}
 	}
+}
+
+func (q *Queue) GetConsumerChannel(consumerIP string) chan string {
+	return q.ConsumerMap[consumerIP]
 }

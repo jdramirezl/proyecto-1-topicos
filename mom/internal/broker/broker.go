@@ -9,4 +9,5 @@ type Broker interface {
 	AddMessage(message string)
 	PopMessage()
 	EnableConsumer(consumerIP string)
+	GetConsumerChannel(consumerIP string) chan string
 }

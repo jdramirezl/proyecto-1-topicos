@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type config struct {
+type Config struct {
 	isVoting        bool
 	uptime          int64
 	peerIPs         []string
@@ -25,10 +26,10 @@ type config struct {
 	solverConn      *grpc.ClientConn
 }
 
-func NewConfig(solver_conn *grpc.ClientConn) config {
+func NewConfig(solver_conn *grpc.ClientConn) *Config {
 	// Create config
 	// Decides new master!
-	return config{
+	return &Config{
 		isVoting:        false,
 		uptime:          time.Now().UnixNano(),
 		peerIPs:         []string{},
@@ -42,18 +43,18 @@ func NewConfig(solver_conn *grpc.ClientConn) config {
 }
 
 // ---------- Check Leader ----------
-func (c *config) isLeader() bool {
+func (c *Config) IsLeader() bool {
 	return c.selfIP == c.leaderIP
 }
 
 // ---------- Add a peer ----------
 // Receiver
-func (c *config) addPeer(peerIP string) {
+func (c *Config) addPeer(peerIP string) {
 	c.peerIPs = append(c.peerIPs, peerIP)
-	peerConn := grpc.Dial(peerIP)
+	peerConn, _ := grpc.Dial(peerIP)
 	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
 
-	if c.isLeader() {
+	if c.IsLeader() {
 		// Add peer to others
 		c.join(peerIP)
 
@@ -62,7 +63,7 @@ func (c *config) addPeer(peerIP string) {
 }
 
 // Sender
-func (c *config) join(ip string) {
+func (c *Config) join(ip string) {
 	for _, conn := range c.peerConnections {
 		client := cluster.NewClusterServiceClient(conn)
 
@@ -75,7 +76,7 @@ func (c *config) join(ip string) {
 // ---------- Remove a peer ----------
 
 // Receiver
-func (c *config) removePeer(peerIP string) {
+func (c *Config) removePeer(peerIP string) {
 	var newPeerIPs []string
 	for _, val := range c.peerIPs {
 		if val == peerIP {
@@ -86,17 +87,18 @@ func (c *config) removePeer(peerIP string) {
 	c.peerIPs = newPeerIPs
 
 	var newPeerConnections []*grpc.ClientConn
-	for _, val := range c.peerConnections {
-		if val == peerIP {
+	for _, peerConn := range c.peerConnections {
+		IP := getHost(peerConn.Target())
+		if IP == peerIP {
 			continue
 		}
-		c.peerConnections = append(c.peerConnections, peerIP)
+		c.peerConnections = append(c.peerConnections, peerConn)
 	}
 	c.peerConnections = newPeerConnections
 }
 
 // Sender
-func (c *config) orderRemove(peerIP string) {
+func (c *Config) orderRemove(peerIP string) {
 	for _, conn := range c.peerConnections {
 		client := cluster.NewClusterServiceClient(conn)
 
@@ -108,7 +110,7 @@ func (c *config) orderRemove(peerIP string) {
 
 // ---------- Watchers ----------
 // Followers
-func (c *config) watchLeader() {
+func (c *Config) watchLeader() {
 	go func() {
 		for {
 			if time.Now().UnixNano() > c.timeout {
@@ -121,7 +123,7 @@ func (c *config) watchLeader() {
 }
 
 // Master
-func (c *config) watchPeers() {
+func (c *Config) watchPeers() {
 	go func() {
 		for {
 			c.heartbeat()
@@ -131,17 +133,17 @@ func (c *config) watchPeers() {
 }
 
 // Receiver
-func (c *config) refreshTimeout() {
+func (c *Config) refreshTimeout() {
 	c.timeout = time.Now().UnixNano() // TODO
 }
 
 // Sender
-func (c *config) heartbeat() { // TODO: cambiar el tiempo!
+func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
 	for _, conn := range c.peerConnections {
 		client := cluster.NewClusterServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		_, err := client.Heartbeat(ctx)
+		_, err := client.Heartbeat(ctx, &emptypb.Empty{})
 
 		// Check if slave is still alive
 		if err != nil {
@@ -159,14 +161,14 @@ func getHost(target string) string {
 }
 
 // ---------- Election ----------
-func (c *config) startElection() {
+func (c *Config) startElection() {
 	newLeader := c.selfIP
 	bestTime := c.uptime
 	c.isVoting = true
 
 	for _, conn := range c.peerConnections {
 		client := cluster.NewClusterServiceClient(conn)
-		res := client.ElectLeader(context.Background())
+		res, _ := client.ElectLeader(context.Background(), &emptypb.Empty{})
 
 		if res > int(bestTime) {
 			newLeader = getHost(conn.Target())
@@ -175,7 +177,7 @@ func (c *config) startElection() {
 
 	c.leaderIP = newLeader
 
-	if c.isLeader() {
+	if c.IsLeader() {
 		client := cluster.NewClusterServiceClient(c.solverConn)
 		req := cluster.MasterRequest{Ip: c.selfIP}
 		client.NewMaster(context.Background(), &req)
@@ -184,7 +186,11 @@ func (c *config) startElection() {
 	c.isVoting = false
 }
 
-func (c *config) catchYouUp(follower_conn *grpc.ClientConn, Mom *mom.momService) {
+func (c *Config) GetUptime() int64 {
+	return c.uptime
+}
+
+func (c *Config) catchYouUp(follower_conn *grpc.ClientConn, Mom *mom.momService) {
 	cluster_client := cluster.NewClusterServiceClient(follower_conn)
 	message_client := message.NewQueueServiceClient(follower_conn)
 
@@ -223,7 +229,7 @@ func (c *config) catchYouUp(follower_conn *grpc.ClientConn, Mom *mom.momService)
 	}
 }
 
-func (c *config) messageSystemCatchUp(
+func (c *Config) messageSystemCatchUp(
 	name string,
 	_type int,
 	m_client *grpc.ClientConn,

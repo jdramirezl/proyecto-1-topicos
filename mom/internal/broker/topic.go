@@ -17,23 +17,23 @@ func NewTopic(creator_ip string) Broker {
 	messageList := linked_list.NewLinkedList()
 
 	q := Topic{
-		Messages:        &messageList,
-		Consumers:       []consumer.Consumer{},
-		ConsumerMap:     map[string]chan string{},
-		Creator:         creator_ip,
+		Messages:    &messageList,
+		Consumers:   []consumer.Consumer{},
+		ConsumerMap: map[string]chan string{},
+		Creator:     creator_ip,
 	}
 
 	return &q
 }
 
-func (q *Topic) Consume(){
+func (q *Topic) Consume() {
 	for {
 		if q.CurrentConsumer == -1 {
 			continue
 		}
 
 		message := q.Messages.Pop()
-		
+
 		if message != nil {
 			go q.Send(*message)
 		}
@@ -46,8 +46,8 @@ func (q *Topic) Send(message string) {
 
 func (q *Topic) sendMessage(message string) {
 	for _, consumer := range q.Consumers {
-		q.Consumers[q.CurrentConsumer].Available = false
-		q.ConsumerMap[q.Consumers[q.CurrentConsumer].IP] <- message
+		consumer.Available = false
+		q.ConsumerMap[consumer.IP] <- message
 	}
 }
 
@@ -55,8 +55,7 @@ func (q *Topic) AddConsumer(address string) chan string {
 	channel := make(chan string)
 	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.IP] = channel
-
-	q.roundRobin() // When current consumer is -1
+	q.Consumers = append(q.Consumers, cons)
 
 	return channel
 }
@@ -66,21 +65,33 @@ func (q *Topic) RemoveConsumer(address string) {
 	if len(q.ConsumerMap) == 0 {
 		q.CurrentConsumer = -1
 	}
+	var newConsumers []consumer.Consumer
+	for _, consumer := range q.Consumers {
+		if consumer.IP == address {
+			continue
+		}
+		newConsumers = append(newConsumers, consumer)
+	}
+	q.Consumers = newConsumers
 }
 
-func (q *Topic) AddMessage(message string){
+func (q *Topic) AddMessage(message string) {
 	q.Messages.Add(message)
 }
 
-func (q *Topic) PopMessage(){
+func (q *Topic) PopMessage() {
 	q.Messages.Pop()
 }
 
-func (q *Topic) EnableConsumer(consumerIP string){
-	for _, consumer := q.Consumers {
+func (q *Topic) EnableConsumer(consumerIP string) {
+	for _, consumer := range q.Consumers {
 		if consumer.IP == consumerIP {
 			consumer.Available = true
 			return
 		}
 	}
+}
+
+func (q *Topic) GetConsumerChannel(consumerIP string) chan string {
+	return q.ConsumerMap[consumerIP]
 }
