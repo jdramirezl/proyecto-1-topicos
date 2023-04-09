@@ -16,19 +16,26 @@ func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *mess
 	return &empty.Empty{}, nil
 }
 
-func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMessageClient) error {
+func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMessageServer) error {
+	errorChan := make(chan error)
 	go func() {
 		for {
-
 			request, err := stream.Recv()
 			if err != nil {
-				return err
+				errorChan <- err
+				return
 			}
 		}
 	}()
-
 	go func() {
-
+		for {
+			response := &message.ConsumeMessageResponse{}
+			err := stream.Send(response)
+			if err != nil {
+				errorChan <- err
+				return
+			}
+		}
 	}()
-	return nil
+	return <-errorChan
 }
