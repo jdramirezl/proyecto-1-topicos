@@ -29,12 +29,13 @@ func NewClient(host, port string) Client {
 
 func (c *Client) Connect(payload string) error {
 	request := cluster.ConnectionRequest{Ip: payload}
-	_, err := 
+	_, err := c.clusterClient.addConnection(context.Background(), request)
 	return err
 }
 
 func (c *Client) Disonnect(payload string) error {
-
+	request := cluster.ConnectionRequest{Ip: payload}
+	_, err := c.clusterClient.removeConnection(context.Background(), request)
 	return err
 }
 
