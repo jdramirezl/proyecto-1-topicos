@@ -1,4 +1,4 @@
-module github.com/jdramirezl/proyecto-1-topicos/mom
+module jdramirezl/proyecto-1-topicos/mom
 
 go 1.18
 

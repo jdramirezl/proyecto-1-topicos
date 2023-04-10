@@ -7,11 +7,24 @@ import (
 	"net/http"
 	"os"
 
-	client "github.com/jdramirezl/proyecto-1-topicos/mom/pkg/client"
+	"jdramirezl/proyecto-1-topicos/mom/pkg/client"
 )
 
 func GetVar(r *http.Request, key string) (value string) {
 	return r.URL.Query().Get(key)
+}
+
+func CheckError(
+	err error, 
+	printError string, 
+	httpError string,
+	w http.ResponseWriter, 
+	){
+	if err != nil {
+		log.Printf(printError + "%v", err)
+		http.Error(w, httpError, http.StatusBadRequest)
+		return
+	}
 }
 
 func NewRouter() http.Handler {
@@ -27,15 +40,22 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/removeSubscriber", func(w http.ResponseWriter, r *http.Request) {})
 	mux.HandleFunc("/addConnection", func(w http.ResponseWriter, r *http.Request) {})
 	mux.HandleFunc("/removeConnection", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		_, err := ioutil.ReadAll(r.Body)
+		CheckError(err, "Error reading body: %v", )
 		if err != nil {
-			log.Printf("Error reading body: %v", err)
+			log.Printf(, err)
 			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}
 
-		message := string(body)
 		connectionIP := r.URL.Query().Get("IP")
+		err = momClient.AddConnection(connectionIP)
+
+		if err != nil {
+			log.Printf("Error connecting: %v", err)
+			http.Error(w, "Can't connect", http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 	})
