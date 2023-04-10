@@ -2,14 +2,18 @@ package mom
 
 import (
 	"errors"
-	"mom/internal/broker"
+	"jdramirezl/proyecto-1-topicos/mom/internal/broker"
 
-	"mom/internal/cluster"
-	"mom/internal/proto/message"
+	"jdramirezl/proyecto-1-topicos/mom/internal/cluster"
+	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 )
 
 var (
-	ErrBrokerNotFound = errors.New("broker not found")
+	ErrBrokerNotFound = errors.New("Broker not found")
+	ErrNotConnected   = errors.New("User is not connected, action forbidden")
+	ErrNotSubscribed  = errors.New("User is not subscribed, action forbidden")
+	ErrSystemExists   = errors.New("System with the same name already exists")
 )
 
 type MomService interface {
@@ -20,7 +24,7 @@ type MomService interface {
 	CreateTopic(name string, clientIP string)
 	DeleteTopic(name string, clientIp string) error
 	GetTopics() map[string]*broker.Topic
-	CreateQueue(name string, clientIP string)
+	CreateQueue(name string, clientIP string) error
 	DeleteQueue(name string, clientIp string) error
 	GetQueues() map[string]*broker.Queue
 	Subscribe(brokerName string, address string, messageType message.Type) error
@@ -50,6 +54,43 @@ func NewMomService() MomService {
 	return m
 }
 
+func (s *momService) IsConnected(userIP string) bool {
+	for _, conn := range s.connections {
+		if conn == userIP {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *momService) IsSubscribed(name string, messageType message.Type, userIP string) bool {
+	var system broker.Broker
+	if messageType == message.Type_QUEUE {
+		system = s.queues[name]
+	} else {
+		system = s.topics[name]
+	}
+
+	for _, cons := range *system.GetConsumers() {
+		if cons.IP == userIP {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *momService) SystemExists(name string, messageType message.Type) bool {
+	var ok bool
+	if messageType == message.Type_QUEUE {
+		_, ok = s.queues[name]
+	} else {
+		_, ok = s.topics[name]
+	}
+
+	return ok
+}
+
 func (s *momService) GetQueues() map[string]*broker.Queue {
 	return s.queues
 }
@@ -77,7 +118,13 @@ func (s *momService) StartConsumption() {
 
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
+	for _, conn := range s.GetConfig().GetPeer() {
+		client := proto_cluster.NewClusterServiceClient(conn)
+
+	}
+
 	s.connections = append(s.connections, address)
+
 }
 
 // Delete a connection from the list of active connections
@@ -95,9 +142,19 @@ func (s *momService) DeleteConnection(deleteAddress string) {
 }
 
 // Create a new queue and add it to the list of active queues
-func (s *momService) CreateQueue(name string, clientIP string) {
+func (s *momService) CreateQueue(name string, clientIP string) error {
+	if !s.IsConnected(clientIP) {
+		return ErrNotConnected
+	}
+
+	if s.SystemExists(name, message.Type_QUEUE) {
+		return ErrSystemExists
+	}
+
 	queue := broker.NewQueue(clientIP)
 	s.queues[name] = queue
+
+	return nil
 }
 
 // Delete the queue with the given name
@@ -105,14 +162,30 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 	if clientIp != s.queues[name].Creator {
 		return ErrBrokerNotFound
 	}
+
+	if !s.IsSubscribed(name, message.Type_QUEUE, clientIp) {
+		return ErrNotSubscribed
+	}
+
 	delete(s.queues, name)
 	return nil
 }
 
 // Create a new queue and add it to the list of active queues
-func (s *momService) CreateTopic(name string, clientIP string) {
+func (s *momService) CreateTopic(name string, clientIP string) error {
+
+	if !s.IsConnected(clientIP) {
+		return ErrNotConnected
+	}
+
+	if s.SystemExists(name, message.Type_TOPIC) {
+		return ErrSystemExists
+	}
+
 	topic := broker.NewTopic(clientIP)
 	s.topics[name] = topic
+
+	return nil
 }
 
 // Delete the queue with the given name
@@ -120,6 +193,11 @@ func (s *momService) DeleteTopic(name string, clientIp string) error {
 	if clientIp != s.topics[name].Creator {
 		return ErrBrokerNotFound
 	}
+
+	if !s.IsSubscribed(name, message.Type_TOPIC, clientIp) {
+		return ErrNotSubscribed
+	}
+
 	delete(s.topics, name)
 	return nil
 }

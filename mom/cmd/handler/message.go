@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
-	"mom/internal/proto/message"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 	"net"
 
 	"github.com/golang/protobuf/ptypes/empty"

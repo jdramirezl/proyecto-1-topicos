@@ -6,9 +6,9 @@ import (
 	"net"
 	"os"
 
-	"mom/cmd/handler"
-	proto_resolver "mom/internal/proto/resolver"
-	resolver "mom/internal/resolver"
+	"jdramirezl/proyecto-1-topicos/mom/cmd/handler"
+	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	resolver "jdramirezl/proyecto-1-topicos/mom/internal/resolver"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

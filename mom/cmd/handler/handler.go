@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"mom/internal/mom"
-	"mom/internal/proto/cluster"
-	"mom/internal/proto/message"
-	"mom/internal/proto/resolver"
+	"jdramirezl/proyecto-1-topicos/mom/internal/mom"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
 )
 
 type MessageService struct {

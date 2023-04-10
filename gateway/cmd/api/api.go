@@ -15,16 +15,18 @@ func GetVar(r *http.Request, key string) (value string) {
 }
 
 func CheckError(
-	err error, 
-	printError string, 
+	err error,
+	printError string,
 	httpError string,
-	w http.ResponseWriter, 
-	){
+	w http.ResponseWriter,
+) bool {
 	if err != nil {
-		log.Printf(printError + "%v", err)
+		log.Printf(printError+"%v", err)
 		http.Error(w, httpError, http.StatusBadRequest)
-		return
+		return false
 	}
+
+	return true
 }
 
 func NewRouter() http.Handler {
@@ -34,26 +36,140 @@ func NewRouter() http.Handler {
 	hostPort := os.Getenv("MOM_PORT")
 	momClient := client.NewClient(hostIP, hostPort)
 
-	mux.HandleFunc("/addMessagingSystem", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/removeMessagingSystem", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/addSubscriber", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/removeSubscriber", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/addConnection", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/removeConnection", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/createSystem", func(w http.ResponseWriter, r *http.Request) {
 		_, err := ioutil.ReadAll(r.Body)
-		CheckError(err, "Error reading body: %v", )
-		if err != nil {
-			log.Printf(, err)
-			http.Error(w, "can't read body", http.StatusBadRequest)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
+		clientIP := r.URL.Query().Get("IP")
+		broker := r.URL.Query().Get("broker")
+		brokerType := r.URL.Query().Get("type")
+
+		err = nil
+		if brokerType == "queue" {
+			err = momClient.CreateQueue(broker, clientIP)
+		} else {
+			err = momClient.CreateTopic(broker, clientIP)
+		}
+
+		safe = CheckError(err, "Error creating system: ", "can't create system", w)
+		if !safe {
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	mux.HandleFunc("/deleteSystem", func(w http.ResponseWriter, r *http.Request) {
+		_, err := ioutil.ReadAll(r.Body)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
+		clientIP := r.URL.Query().Get("IP")
+		broker := r.URL.Query().Get("broker")
+		brokerType := r.URL.Query().Get("type")
+
+		err = nil
+		if brokerType == "queue" {
+			err = momClient.DeleteQueue(broker, clientIP)
+		} else {
+			err = momClient.DeleteTopic(broker, clientIP)
+		}
+
+		safe = CheckError(err, "Error deleting system: ", "can't delete system", w)
+		if !safe {
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	mux.HandleFunc("/subscribe", func(w http.ResponseWriter, r *http.Request) {
+		_, err := ioutil.ReadAll(r.Body)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
+		clientIP := r.URL.Query().Get("IP")
+		broker := r.URL.Query().Get("broker")
+		brokerType := r.URL.Query().Get("type")
+
+		err = nil
+		if brokerType == "queue" {
+			err = momClient.SubscribeQueue(broker, clientIP)
+		} else {
+			err = momClient.SubscribeTopic(broker, clientIP)
+		}
+
+		safe = CheckError(err, "Error subscribing: ", "can't subscribe", w)
+		if !safe {
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	mux.HandleFunc("/unsubscribe", func(w http.ResponseWriter, r *http.Request) {
+		_, err := ioutil.ReadAll(r.Body)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
+		clientIP := r.URL.Query().Get("IP")
+		broker := r.URL.Query().Get("broker")
+		brokerType := r.URL.Query().Get("type")
+
+		err = nil
+		if brokerType == "queue" {
+			err = momClient.UnSubscribeQueue(broker, clientIP)
+		} else {
+			err = momClient.UnSubscribeTopic(broker, clientIP)
+		}
+
+		safe = CheckError(err, "Error unsubscribing: ", "can't unsubscribe", w)
+		if !safe {
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	mux.HandleFunc("/addConnection", func(w http.ResponseWriter, r *http.Request) {
+		_, err := ioutil.ReadAll(r.Body)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
 			return
 		}
 
 		connectionIP := r.URL.Query().Get("IP")
 		err = momClient.AddConnection(connectionIP)
 
-		if err != nil {
-			log.Printf("Error connecting: %v", err)
-			http.Error(w, "Can't connect", http.StatusBadRequest)
+		safe = CheckError(err, "Error connecting: ", "Can't connect", w)
+		if !safe {
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	mux.HandleFunc("/removeConnection", func(w http.ResponseWriter, r *http.Request) {
+		_, err := ioutil.ReadAll(r.Body)
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
+		connectionIP := r.URL.Query().Get("IP")
+		err = momClient.RemoveConnection(connectionIP)
+
+		safe = CheckError(err, "Error connecting: ", "Can't connect", w)
+		if !safe {
 			return
 		}
 
@@ -67,24 +183,28 @@ func NewRouter() http.Handler {
 			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}
+
+		safe := CheckError(err, "Error reading body: ", "can't read body", w)
+		if !safe {
+			return
+		}
+
 		message := string(body)
 		broker := r.URL.Query().Get("broker")
 		brokerType := r.URL.Query().Get("type")
+
+		err = nil
 		if brokerType == "queue" {
-			err := momClient.PublishQueue(broker, message)
-			if err != nil {
-				log.Printf("Error publishing message: %v", err)
-				http.Error(w, "can't publish message", http.StatusBadRequest)
-				return
-			}
+			err = momClient.PublishQueue(broker, message)
 		} else {
-			err := momClient.PublishTopic(broker, message)
-			if err != nil {
-				log.Printf("Error publishing message: %v", err)
-				http.Error(w, "can't publish message", http.StatusBadRequest)
-				return
-			}
+			err = momClient.PublishTopic(broker, message)
 		}
+
+		safe = CheckError(err, "Error publishing message: ", "can't publish message", w)
+		if !safe {
+			return
+		}
+
 		w.WriteHeader(http.StatusCreated)
 	})
 

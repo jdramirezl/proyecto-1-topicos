@@ -6,10 +6,10 @@ import (
 	"net"
 	"os"
 
-	"mom/cmd/handler"
-	"mom/internal/mom"
-	"mom/internal/proto/cluster"
-	"mom/internal/proto/message"
+	"jdramirezl/proyecto-1-topicos/mom/cmd/handler"
+	"jdramirezl/proyecto-1-topicos/mom/internal/mom"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	proto_resolver "mom/internal/proto/resolver"
-	resolver "mom/internal/resolver"
+	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	resolver "jdramirezl/proyecto-1-topicos/mom/internal/resolver"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )

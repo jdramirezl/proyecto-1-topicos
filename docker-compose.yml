@@ -17,6 +17,7 @@ services:
     environment:
       - MOM_HOST=resolver
       - MOM_PORT=8080
+      - CLUSTER_PORT=8080
     env_file:
       - ./gateway/.env
     networks:
@@ -39,6 +40,8 @@ services:
     command: air
     env_file:
       - ./mom/.env
+    environment:
+      - PORT=8080
     networks:
       - proyecto-1
 
@@ -48,6 +51,8 @@ services:
     command: sleep 15s && air
     env_file:
       - ./mom/.env
+    environment:
+      - PORT=8080
     networks:
       - proyecto-1
 
@@ -57,6 +62,8 @@ services:
     command: sleep 30s && air
     env_file:
       - ./mom/.env
+    environment:
+      - PORT=8080
     networks:
       - proyecto-1
 

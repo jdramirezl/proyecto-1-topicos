@@ -1,10 +1,10 @@
 package cluster
 
 import (
-	broker "mom/internal/broker"
-	proto_cluster "mom/internal/proto/cluster"
-	proto_message "mom/internal/proto/message"
-	proto_resolver "mom/internal/proto/resolver"
+	broker "jdramirezl/proyecto-1-topicos/mom/internal/broker"
+	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
 	"os"
 
 	"strings"
@@ -59,6 +59,8 @@ func NewConfig() *Config {
 
 	return &conf
 }
+
+// ------ GETS -----------
 
 // ---------- Check Leader ----------
 func (c *Config) IsLeader() bool {
