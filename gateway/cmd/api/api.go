@@ -26,7 +26,20 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/addSubscriber", func(w http.ResponseWriter, r *http.Request) {})
 	mux.HandleFunc("/removeSubscriber", func(w http.ResponseWriter, r *http.Request) {})
 	mux.HandleFunc("/addConnection", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("/removeConnection", func(w http.ResponseWriter, r *http.Request) {})
+	mux.HandleFunc("/removeConnection", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading body: %v", err)
+			http.Error(w, "can't read body", http.StatusBadRequest)
+			return
+		}
+
+		message := string(body)
+		connectionIP := r.URL.Query().Get("IP")
+
+		w.WriteHeader(http.StatusCreated)
+	})
+
 	mux.HandleFunc("/addMessage", func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -37,7 +50,7 @@ func NewRouter() http.Handler {
 		message := string(body)
 		broker := r.URL.Query().Get("broker")
 		brokerType := r.URL.Query().Get("type")
-		if brokerType == "rabbitmq" {
+		if brokerType == "queue" {
 			err := momClient.PublishQueue(broker, message)
 			if err != nil {
 				log.Printf("Error publishing message: %v", err)

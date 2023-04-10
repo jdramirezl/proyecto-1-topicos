@@ -1,12 +1,12 @@
-module mom
+module jdramirezl/proyecto-1-topicos/mom
 
 go 1.18
 
 require (
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	golang.org/x/net v0.9.0
-	google.golang.org/grpc v1.51.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/grpc v1.54.0
+	google.golang.org/protobuf v1.30.0
 )
 
 require (

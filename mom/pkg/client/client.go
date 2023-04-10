@@ -27,6 +27,17 @@ func NewClient(host, port string) Client {
 	return Client{messageClient: messageClient, clusterClient: clusterClient}
 }
 
+func (c *Client) Connect(payload string) error {
+	request := cluster.ConnectionRequest{Ip: payload}
+	_, err := 
+	return err
+}
+
+func (c *Client) Disonnect(payload string) error {
+
+	return err
+}
+
 func (c *Client) PublishQueue(payload string, queue string) error {
 	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.Type_QUEUE}
 	_, err := c.messageClient.AddMessage(context.Background(), &request)
