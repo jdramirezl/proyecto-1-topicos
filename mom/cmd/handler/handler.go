@@ -4,7 +4,8 @@ import (
 	"jdramirezl/proyecto-1-topicos/mom/internal/mom"
 	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	resolver "jdramirezl/proyecto-1-topicos/mom/internal/resolver"
 )
 
 type MessageService struct {
@@ -18,8 +19,8 @@ type ClusterService struct {
 }
 
 type ResolverService struct {
-	resolver.UnimplementedResolverServiceServer
-	momService mom.MomService
+	proto_resolver.UnimplementedResolverServiceServer
+	Master *resolver.Master
 }
 
 type Handler struct {
@@ -28,9 +29,10 @@ type Handler struct {
 	ResolverService *ResolverService
 }
 
-func NewHandler(momService mom.MomService) *Handler {
+func NewHandler(momService mom.MomService, master *resolver.Master) *Handler {
 	return &Handler{
-		QueueService:   &MessageService{momService: momService},
-		ClusterService: &ClusterService{momService: momService},
+		QueueService:    &MessageService{momService: momService},
+		ClusterService:  &ClusterService{momService: momService},
+		ResolverService: &ResolverService{Master: master},
 	}
 }

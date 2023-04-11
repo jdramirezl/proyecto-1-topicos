@@ -43,7 +43,8 @@ func NewConfig() *Config {
 	_resolverAddress := _resolverIP + ":" + _resolverPort
 
 	_resolverConn, err := grpc.Dial(_resolverAddress, grpc.WithInsecure())
-	fmt.Print(err)
+	fmt.Println(err)
+	fmt.Print(_resolverAddress)
 	_leaderIP := GetLeader(_selfAddress, _resolverConn)
 
 	conf := Config{
@@ -88,9 +89,13 @@ func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 	_leaderIP := res.Ip
 
 	if _leaderIP == "" {
+		fmt.Println("No leader currently, im: " + selfIP)
+
 		_leaderIP = selfIP
 		req := proto_resolver.MasterMessage{Ip: selfIP}
 		client.NewMaster(context.Background(), &req)
+	} else {
+		fmt.Println("There is a leader: " + _leaderIP + " and my IP is: " + selfIP)
 	}
 
 	return _leaderIP

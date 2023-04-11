@@ -15,6 +15,9 @@ import (
 )
 
 func main() {
+	Resolver := resolver.NewMaster()
+	// Resolver.GetMasterIP()
+
 	port := os.Getenv("PORT")
 	ip := "0.0.0.0"
 
@@ -23,11 +26,9 @@ func main() {
 		panic(err)
 	}
 	server := grpc.NewServer()
-	h := handler.NewHandler(nil)
+	h := handler.NewHandler(nil, Resolver)
 	proto_resolver.RegisterResolverServiceServer(server, h.ResolverService)
 	reflection.Register(server)
-	Resolver := resolver.NewMaster()
-	Resolver.GetMasterIP()
 
 	log.Printf("Listening on port: %v\n", port)
 	if err := server.Serve(lis); err != nil {

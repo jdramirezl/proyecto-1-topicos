@@ -25,7 +25,7 @@ func main() {
 	}
 	server := grpc.NewServer()
 	momService := mom.NewMomService()
-	h := handler.NewHandler(momService)
+	h := handler.NewHandler(momService, nil)
 	message.RegisterMessageServiceServer(server, h.QueueService)
 	cluster.RegisterClusterServiceServer(server, h.ClusterService)
 
