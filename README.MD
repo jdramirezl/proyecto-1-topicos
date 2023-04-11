@@ -124,27 +124,54 @@ Con las isntancias ya corriendo, se puede acceder a los servicios mediante el ga
 
 Las rutas de acceso son las siguientes:
 - addMessage
+    * PARAMETERS:
     * body: Cuerpo del mensaje
     * broker: Nombre del queue/topic al que se quiere enviar el mensaje
     * brokerType: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
+
 - removeConnection
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+
 - addConnection
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+
 - unsubscribe
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+  * broker: Nombre del queue/topic al que se quiere enviar el mensaje
+  * brokerType: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
+
 - subscribe
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+  * broker: Nombre del queue/topic al que se quiere enviar el mensaje
+  * brokerType: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
+
 - deleteSystem
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+  * broker: Nombre del queue/topic al que se quiere enviar el mensaje
+  * type: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
+
 - createSystem
+  * PARAMETERS:
+  * IP: IP del cliente que hace el request
+  * broker: Nombre del queue/topic al que se quiere enviar el mensaje
+  * type: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
 
 Para usar cada una de estas rutas, se debe enviar un request GET con los parametros necesarios en el formato:
 `http://<gateway_ip>:<gateway_port>/<ruta>?<parametros>`
 
-## opcionalmente - si quiere mostrar resultados o pantallazos 
 
 # 5. otra información que considere relevante para esta actividad.
 
 # referencias:
-<debemos siempre reconocer los créditos de partes del código que reutilizaremos, así como referencias a youtube, o referencias bibliográficas utilizadas para desarrollar el proyecto o la actividad>
-## sitio1-url 
-## sitio2-url
-## url de donde tomo info para desarrollar este proyecto
+- [Descripcion del proyecto](https://eafit-my.sharepoint.com/:w:/g/personal/emontoya_eafit_edu_co/EWjifZZ2IndKj10aze4_qKYBXRLdUXyMstfUYn70KwqCWA?e=gKcMGu)
+- [Master-slave replication](https://dennylesmana.medium.com/master-slave-replication-database-concept-for-beginners-300b3f9a8228)
+- [Raft consensus](https://dennylesmana.medium.com/master-slave-replication-database-concept-for-beginners-300b3f9a8228)
+- [Peer solving](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/peer-resolvers)
+- [Working with multiple go mods](https://stackoverflow.com/questions/69059470/is-there-a-way-to-set-up-multiple-local-go-modules-so-they-can-run-inside-one-d)
 
 #### versión README.md -> 1.0 (2023-abril)
