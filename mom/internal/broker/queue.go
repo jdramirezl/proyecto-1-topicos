@@ -1,8 +1,8 @@
 package broker
 
 import (
-	"jdramirezl/proyecto-1-topicos/mom/internal/consumer"
-	"jdramirezl/proyecto-1-topicos/mom/internal/linked_list"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/consumer"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/linked_list"
 )
 
 type Queue struct {

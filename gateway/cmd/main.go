@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	"jdramirezl/proyecto-1-topicos/gateway/cmd/api"
+	"github.com/jdramirezl/proyecto-1-topicos/gateway/cmd/api"
 )
 
 func main() {

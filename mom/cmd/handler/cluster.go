@@ -2,9 +2,10 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
-	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	proto_message "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )
@@ -102,6 +103,7 @@ func (c *ClusterService) RemovePeer(ctx context.Context, req *proto_cluster.Peer
 }
 
 func (c *ClusterService) Heartbeat(ctx context.Context, emp *empty.Empty) (*empty.Empty, error) {
+	fmt.Println("Got refresh request!")
 	c.momService.GetConfig().RefreshTimeout()
 	return &empty.Empty{}, nil
 }

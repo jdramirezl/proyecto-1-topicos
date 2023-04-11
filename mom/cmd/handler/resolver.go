@@ -3,7 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
-	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+
+	proto_resolver "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/peer"

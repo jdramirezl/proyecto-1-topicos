@@ -1,4 +1,4 @@
-module jdramirezl/proyecto-1-topicos/gateway
+module github.com/jdramirezl/proyecto-1-topicos/gateway
 
 go 1.18
 

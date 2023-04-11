@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"jdramirezl/proyecto-1-topicos/mom/internal/mom"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
-	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
-	resolver "jdramirezl/proyecto-1-topicos/mom/internal/resolver"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/mom"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_resolver "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	resolver "github.com/jdramirezl/proyecto-1-topicos/mom/internal/resolver"
 )
 
 type MessageService struct {

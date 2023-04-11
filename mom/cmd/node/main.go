@@ -6,10 +6,10 @@ import (
 	"net"
 	"os"
 
-	"jdramirezl/proyecto-1-topicos/mom/cmd/handler"
-	"jdramirezl/proyecto-1-topicos/mom/internal/mom"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/cmd/handler"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/mom"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -24,6 +24,7 @@ func main() {
 		panic(err)
 	}
 	server := grpc.NewServer()
+
 	momService := mom.NewMomService()
 	h := handler.NewHandler(momService, nil)
 	message.RegisterMessageServiceServer(server, h.QueueService)
@@ -34,4 +35,5 @@ func main() {
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+
 }

@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
-	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
-	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 	"net"
+
+	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_message "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/peer"

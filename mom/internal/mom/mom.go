@@ -3,11 +3,12 @@ package mom
 import (
 	"context"
 	"errors"
-	"jdramirezl/proyecto-1-topicos/mom/internal/broker"
 
-	"jdramirezl/proyecto-1-topicos/mom/internal/cluster"
-	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/broker"
+
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/cluster"
+	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 )
 
 var (

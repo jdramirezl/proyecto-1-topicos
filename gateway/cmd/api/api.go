@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"jdramirezl/proyecto-1-topicos/mom/pkg/client"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/pkg/client"
 )
 
 func GetVar(r *http.Request, key string) (value string) {

@@ -2,11 +2,12 @@ package cluster
 
 import (
 	"fmt"
-	broker "jdramirezl/proyecto-1-topicos/mom/internal/broker"
-	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
-	proto_resolver "jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
 	"os"
+
+	broker "github.com/jdramirezl/proyecto-1-topicos/mom/internal/broker"
+	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	proto_message "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_resolver "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
 
 	"strings"
 	"time"
@@ -53,7 +54,7 @@ func NewConfig() *Config {
 		peerIPs:         []string{},
 		peerConnections: []*grpc.ClientConn{},
 		leaderIP:        _leaderIP,
-		timeout:         time.Now().UnixNano(), // Revisar
+		timeout:         time.Now().Unix() + 15, // Revisar
 		interval:        2 * time.Second,
 		selfIP:          _selfAddress,
 		resolverConn:    _resolverConn, // TODO
@@ -62,6 +63,7 @@ func NewConfig() *Config {
 
 	if !conf.IsLeader() {
 		conf.AddPeer(_leaderIP)
+		conf.join(_selfAddress)
 		conf.watchLeader()
 	} else {
 		conf.watchPeers()
@@ -170,10 +172,13 @@ func (c *Config) watchLeader() {
 	go func() {
 		for {
 			if c.isVoting {
+				fmt.Println("Im voting so stop!: " + c.selfIP)
 				break
 			}
-
-			if time.Now().UnixNano() > c.timeout {
+			fmt.Println("Time now is: " + fmt.Sprint(time.Now().Unix()))
+			fmt.Println("TimeOUT is: " + fmt.Sprint(c.timeout))
+			fmt.Println("Start election?: " + fmt.Sprint(time.Now().Unix() > c.timeout))
+			if time.Now().Unix() > c.timeout {
 				c.startElection()
 				time.Sleep(c.interval)
 			}
@@ -187,7 +192,9 @@ func (c *Config) watchPeers() {
 	go func() {
 
 		for {
+			time.Sleep(c.interval)
 			if c.isVoting {
+				fmt.Println("Im leader and voting so stop!: " + c.selfIP)
 				break
 			}
 
@@ -199,14 +206,20 @@ func (c *Config) watchPeers() {
 
 // Receiver
 func (c *Config) RefreshTimeout() {
-	c.timeout = time.Now().UnixNano() // TODO
+	fmt.Println("Refreshing timeout...")
+	c.timeout = time.Now().Unix() + 15 // TODO
+	return
 }
 
 // Sender
 func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
+	fmt.Println("Im master and im refreshing!")
 	for _, conn := range c.peerConnections {
+		target := conn.Target()
+		fmt.Println("Refreshing: " + string(target[:strings.IndexByte(target, ':')]))
 		client := proto_cluster.NewClusterServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		deadline := time.Now().Add(5 * time.Second)
+		ctx, cancel := context.WithDeadline(context.Background(), deadline)
 		defer cancel()
 		_, err := client.Heartbeat(ctx, &emptypb.Empty{})
 
@@ -217,6 +230,7 @@ func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
 				c.orderRemove(getHost(conn.Target()))
 			}
 		}
+		return
 	}
 }
 
@@ -227,6 +241,7 @@ func getHost(target string) string {
 
 // ---------- Election ----------
 func (c *Config) startElection() {
+	fmt.Println("Starting Election")
 	newLeader := c.selfIP
 	bestTime := c.uptime
 	c.isVoting = true

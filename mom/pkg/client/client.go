@@ -3,11 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
-	"jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
-	"jdramirezl/proyecto-1-topicos/mom/pkg/internal/connection"
 	"os"
+
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/resolver"
+	"github.com/jdramirezl/proyecto-1-topicos/mom/pkg/internal/connection"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )

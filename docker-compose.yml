@@ -3,16 +3,22 @@ version: "3.8"
 services:
   consumer:
     build:
-      context: ./consumer
+      context: .
+      dockerfile: ./consumer/Dockerfile
     command: air
     env_file:
       - ./consumer/.env
     networks:
       - proyecto-1
+    expose:
+      - "8080"
+    # volumes:
+    #   - ./consumer:/app
 
   gateway:
     build:
-      context: ./gateway
+      context: .
+      dockerfile: ./gateway/Dockerfile
     command: air
     environment:
       - MOM_HOST=resolver
@@ -21,24 +27,33 @@ services:
     env_file:
       - ./gateway/.env
     networks:
-
       - proyecto-1
+    expose:
+      - "8080"
+    # volumes:
+    #   - ./gateway:/app
+
   resolver:
     build:
       context: ./mom
     command: go run ./cmd/resolver/main.go
     environment:
       - PORT=8080
+    expose:
+      - "8080"
     env_file:
       - ./mom/.env
     networks:
       - proyecto-1
+    volumes:
+      - ./mom:/app
 
   leader:
     build:
       context: ./mom
     command: go run ./cmd/node/main.go
     environment:
+      - SELF_IP=leader
       - RESOLVER_IP=resolver
       - RESOLVER_PORT=8080
       - MOM_PORT=8080
@@ -46,8 +61,12 @@ services:
       - PORT=8080
     networks:
       - proyecto-1
+    expose:
+      - "8080"
     depends_on:
       - resolver
+    volumes:
+      - ./mom:/app
 
   follower-1:
     build:
@@ -56,13 +75,18 @@ services:
     environment:
       - RESOLVER_IP=resolver
       - RESOLVER_PORT=8080
+      - SELF_IP=follower-1
       - MOM_PORT=8080
       - CLUSTER_PORT=8080
       - PORT=8080
     networks:
       - proyecto-1
+    expose:
+      - "8080"
     depends_on:
       - resolver
+    volumes:
+      - ./mom:/app
 
   follower-2:
     build:
@@ -71,13 +95,18 @@ services:
     environment:
       - RESOLVER_IP=resolver
       - RESOLVER_PORT=8080
+      - SELF_IP=follower-2
       - MOM_PORT=8080
       - CLUSTER_PORT=8080
       - PORT=8080
     networks:
       - proyecto-1
+    expose:
+      - 8080
     depends_on:
       - resolver
+    volumes:
+      - ./mom:/app
 
 networks:
   proyecto-1:
