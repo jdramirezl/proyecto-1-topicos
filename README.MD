@@ -54,24 +54,24 @@ TODO: ALKSDJF;LASDJF;KLAJSDFL;A IMAGEN
 
 ## Tecnologias y herramientas
 - Lenguaje de programacion: Golang 1.18
-- gRPC: 
+- gRPC
 - Docker
 - Docker Compose
 - AWS EC2
 
 ## Librerias
-- "context"
-- "errors"
-- "fmt"
-- "time"
-- "net"
-- "github.com/golang/protobuf/ptypes/empty"
-- "google.golang.org/grpc/peer"
 - "os"
+- "net"
+- "fmt"
 - "log"
-- "google.golang.org/grpc"
-- "google.golang.org/grpc/reflection"
+- "time"
+- "errors"
+- "context"
 - "strings"
+- "google.golang.org/grpc"
+- "google.golang.org/grpc/peer"
+- "google.golang.org/grpc/reflection"
+- "github.com/golang/protobuf/ptypes/empty"
 
 ## IP o nombres de dominio en nube o en la máquina servidor.
 TODO: DREW!!!!
@@ -109,9 +109,32 @@ Para el resolvedor de IPs
 1. Ingresar al docker-compose
 2. En cada contenedor cambiar los parametros de configuracion en la seccion "environment"
 
-## como se lanza el servidor.
+## Como se lanza el servidor.
+1. Ingresar a AWS
+2. Acceder a la consola de las instancias EC2 mediante SSH 
+    * gateway: Instancia donde tenemos el gateway
+    * mom: Instancia donde tenemos el MOM Server
+3. Levantar el contenedor en cada parte mediante `sudo docker-compose up` 
 
-## una mini guia de como un usuario utilizaría el software o la aplicación
+
+## Guia de uso para usuario
+
+Con las isntancias ya corriendo, se puede acceder a los servicios mediante el gateway.
+
+Las rutas de acceso son las siguientes:
+- addMessage
+    * body: Cuerpo del mensaje
+    * broker: Nombre del queue/topic al que se quiere enviar el mensaje
+    * brokerType: Tipo de broker al que se quiere enviar el mensaje ("queue" o "topic")
+- removeConnection
+- addConnection
+- unsubscribe
+- subscribe
+- deleteSystem
+- createSystem
+
+Para usar cada una de estas rutas, se debe enviar un request GET con los parametros necesarios en el formato:
+`http://<gateway_ip>:<gateway_port>/<ruta>?<parametros>`
 
 ## opcionalmente - si quiere mostrar resultados o pantallazos 
 
