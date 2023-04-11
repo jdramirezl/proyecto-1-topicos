@@ -30,8 +30,8 @@ type MomService interface {
 	GetQueues() map[string]*broker.Queue
 	Subscribe(brokerName string, address string, systemType proto_cluster.Type) error
 	Unsubscribe(brokerName string, address string, systemType proto_cluster.Type) error
-	SendMessage(brokerName string, payload string, messageType message.Type) error
-	EnableConsumer(brokerName string, consumerIP string, messageType message.Type) error
+	SendMessage(brokerName string, payload string, messageType message.MessageType) error
+	EnableConsumer(brokerName string, consumerIP string, messageType message.MessageType) error
 	GetBroker(brokerName string, systemType proto_cluster.Type) (broker.Broker, error)
 	GetConfig() *cluster.Config
 }
@@ -64,9 +64,9 @@ func (s *momService) IsConnected(userIP string) bool {
 	return false
 }
 
-func (s *momService) IsSubscribed(name string, messageType message.Type, userIP string) bool {
+func (s *momService) IsSubscribed(name string, messageType message.MessageType, userIP string) bool {
 	var system broker.Broker
-	if messageType == message.Type_QUEUE {
+	if messageType == message.MessageType_MESSAGEQUEUE {
 		system = s.queues[name]
 	} else {
 		system = s.topics[name]
@@ -81,9 +81,9 @@ func (s *momService) IsSubscribed(name string, messageType message.Type, userIP 
 	return false
 }
 
-func (s *momService) SystemExists(name string, messageType message.Type) bool {
+func (s *momService) SystemExists(name string, messageType message.MessageType) bool {
 	var ok bool
-	if messageType == message.Type_QUEUE {
+	if messageType == message.MessageType_MESSAGEQUEUE {
 		_, ok = s.queues[name]
 	} else {
 		_, ok = s.topics[name]
@@ -159,7 +159,7 @@ func (s *momService) CreateQueue(name string, clientIP string) error {
 		return ErrNotConnected
 	}
 
-	if s.SystemExists(name, message.Type_QUEUE) {
+	if s.SystemExists(name, message.MessageType_MESSAGEQUEUE) {
 		return ErrSystemExists
 	}
 
@@ -187,7 +187,7 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 		return ErrBrokerNotFound
 	}
 
-	if !s.IsSubscribed(name, message.Type_QUEUE, clientIp) {
+	if !s.IsSubscribed(name, message.MessageType_MESSAGEQUEUE, clientIp) {
 		return ErrNotSubscribed
 	}
 
@@ -214,7 +214,7 @@ func (s *momService) CreateTopic(name string, clientIP string) error {
 		return ErrNotConnected
 	}
 
-	if s.SystemExists(name, message.Type_TOPIC) {
+	if s.SystemExists(name, message.MessageType_MESSAGETOPIC) {
 		return ErrSystemExists
 	}
 
@@ -242,7 +242,7 @@ func (s *momService) DeleteTopic(name string, clientIp string) error {
 		return ErrBrokerNotFound
 	}
 
-	if !s.IsSubscribed(name, message.Type_TOPIC, clientIp) {
+	if !s.IsSubscribed(name, message.MessageType_MESSAGETOPIC, clientIp) {
 		return ErrNotSubscribed
 	}
 
@@ -318,10 +318,10 @@ func (s *momService) Unsubscribe(brokerName string, address string, systemType p
 }
 
 // Send a message to a queue or topic
-func (s *momService) SendMessage(brokerName string, payload string, messageType message.Type) error {
+func (s *momService) SendMessage(brokerName string, payload string, messageType message.MessageType) error {
 
 	systemType := proto_cluster.Type_QUEUE
-	if messageType == message.Type_TOPIC {
+	if messageType == message.MessageType_MESSAGETOPIC {
 		systemType = proto_cluster.Type_TOPIC
 	}
 
@@ -346,9 +346,9 @@ func (s *momService) SendMessage(brokerName string, payload string, messageType 
 	return nil
 }
 
-func (s *momService) EnableConsumer(brokerName string, consumerIP string, messageType message.Type) error {
+func (s *momService) EnableConsumer(brokerName string, consumerIP string, messageType message.MessageType) error {
 	systemType := proto_cluster.Type_QUEUE
-	if messageType == message.Type_TOPIC {
+	if messageType == message.MessageType_MESSAGETOPIC {
 		systemType = proto_cluster.Type_TOPIC
 	}
 

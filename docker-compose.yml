@@ -21,8 +21,8 @@ services:
     env_file:
       - ./gateway/.env
     networks:
-      - proyecto-1
 
+      - proyecto-1
   resolver:
     build:
       context: ./mom
@@ -37,38 +37,47 @@ services:
   leader:
     build:
       context: ./mom
-    # command: air --target="./cmd/node/main.go"
     command: go run ./cmd/node/main.go
-    env_file:
-      - ./mom/.env
     environment:
+      - RESOLVER_IP=resolver
+      - RESOLVER_PORT=8080
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
       - PORT=8080
     networks:
       - proyecto-1
+    depends_on:
+      - resolver
 
   follower-1:
     build:
       context: ./mom
-    # command: sleep 15s && air --target="./cmd/resolver/main.go"
     command: go run ./cmd/node/main.go
-    env_file:
-      - ./mom/.env
     environment:
+      - RESOLVER_IP=resolver
+      - RESOLVER_PORT=8080
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
       - PORT=8080
     networks:
       - proyecto-1
+    depends_on:
+      - resolver
 
   follower-2:
     build:
       context: ./mom
-    # command: sleep 30s && air --target="./cmd/resolver/main.go"
     command: go run ./cmd/node/main.go
-    env_file:
-      - ./mom/.env
     environment:
+      - RESOLVER_IP=resolver
+      - RESOLVER_PORT=8080
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
       - PORT=8080
     networks:
       - proyecto-1
+    depends_on:
+      - resolver
 
 networks:
   proyecto-1:

@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	broker "jdramirezl/proyecto-1-topicos/mom/internal/broker"
 	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
@@ -34,9 +35,16 @@ func NewConfig() *Config {
 	// Decides new master!
 
 	_selfIP := os.Getenv("SELF_IP")
+	_selfPort := os.Getenv("PORT")
+	_selfAddress := _selfIP + ":" + _selfPort
+
 	_resolverIP := os.Getenv("RESOLVER_IP")
-	_resolverConn, _ := grpc.Dial(_resolverIP)
-	_leaderIP := GetLeader(_selfIP, _resolverConn)
+	_resolverPort := os.Getenv("RESOLVER_PORT")
+	_resolverAddress := _resolverIP + ":" + _resolverPort
+
+	_resolverConn, err := grpc.Dial(_resolverAddress, grpc.WithInsecure())
+	fmt.Print(err)
+	_leaderIP := GetLeader(_selfAddress, _resolverConn)
 
 	conf := Config{
 		isVoting:        false,
@@ -46,9 +54,10 @@ func NewConfig() *Config {
 		leaderIP:        _leaderIP,
 		timeout:         time.Now().UnixNano(), // Revisar
 		interval:        2 * time.Second,
-		selfIP:          _selfIP,
+		selfIP:          _selfAddress,
 		resolverConn:    _resolverConn, // TODO
 	}
+	fmt.Println(conf)
 
 	if !conf.IsLeader() {
 		conf.AddPeer(_leaderIP)
@@ -73,7 +82,9 @@ func (c *Config) IsLeader() bool {
 func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 	client := proto_resolver.NewResolverServiceClient(resolverConn)
 
-	res, _ := client.GetMaster(context.Background(), &emptypb.Empty{})
+	res, err := client.GetMaster(context.Background(), &emptypb.Empty{})
+	fmt.Println(err)
+	fmt.Println("8===============D")
 	_leaderIP := res.Ip
 
 	if _leaderIP == "" {
@@ -89,7 +100,7 @@ func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 // Receiver
 func (c *Config) AddPeer(peerIP string) {
 	c.peerIPs = append(c.peerIPs, peerIP)
-	peerConn, _ := grpc.Dial(peerIP)
+	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
 	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
 
 	if c.IsLeader() {
@@ -276,7 +287,7 @@ func (c *Config) CatchYouUp(
 	for queue_name, queue := range queues {
 		c.messageSystemCatchUp(
 			queue_name,
-			proto_message.Type_QUEUE,
+			proto_message.MessageType_MESSAGEQUEUE,
 			message_client,
 			cluster_client,
 			queue,
@@ -287,7 +298,7 @@ func (c *Config) CatchYouUp(
 	for topic_name, topic := range topics {
 		c.messageSystemCatchUp(
 			topic_name,
-			proto_message.Type_QUEUE,
+			proto_message.MessageType_MESSAGEQUEUE,
 			message_client,
 			cluster_client,
 			topic,
@@ -297,16 +308,16 @@ func (c *Config) CatchYouUp(
 
 func (c *Config) messageSystemCatchUp(
 	name string,
-	system_type proto_message.Type,
+	system_type proto_message.MessageType,
 	m_client proto_message.MessageServiceClient,
 	c_client proto_cluster.ClusterServiceClient,
 	system broker.Broker,
 ) {
 	system_req_type := proto_cluster.Type_QUEUE
-	message_req_type := proto_message.Type_QUEUE
-	if system_type == proto_message.Type_TOPIC {
+	message_req_type := proto_message.MessageType_MESSAGEQUEUE
+	if system_type == proto_message.MessageType_MESSAGETOPIC {
 		system_req_type = proto_cluster.Type_TOPIC
-		message_req_type = proto_message.Type_TOPIC
+		message_req_type = proto_message.MessageType_MESSAGETOPIC
 	}
 
 	req := proto_cluster.SystemRequest{

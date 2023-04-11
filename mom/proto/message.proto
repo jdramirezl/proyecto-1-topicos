@@ -3,20 +3,20 @@ option go_package = "proto/message/;message";
 
 import "google/protobuf/empty.proto";
 
-enum Type {
-    QUEUE = 0;
-    TOPIC = 1;
+enum MessageType {
+    MESSAGEQUEUE = 0;
+    MESSAGETOPIC = 1;
 }
 
  message MessageRequest {
     string name = 2;
-    Type type = 3;
+    MessageType type = 3;
 	string payload = 4;
 }
 
 message ConsumeMessageRequest {
     string name = 1;
-    Type type = 2;
+    MessageType type = 2;
     string ip = 3;
 }
 

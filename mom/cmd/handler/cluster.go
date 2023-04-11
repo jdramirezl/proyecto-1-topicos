@@ -117,9 +117,9 @@ func (c *ClusterService) ElectLeader(ctx context.Context, emp *empty.Empty) (*pr
 func (c *ClusterService) EnableConsumer(ctx context.Context, req *proto_cluster.EnableConsumerRequest) (*empty.Empty, error) {
 	messageType := req.Type
 
-	systemType := proto_message.Type_QUEUE
+	systemType := proto_message.MessageType_MESSAGEQUEUE
 	if messageType == proto_cluster.Type_TOPIC {
-		systemType = proto_message.Type_TOPIC
+		systemType = proto_message.MessageType_MESSAGETOPIC
 	}
 
 	err := c.momService.EnableConsumer(req.Ip, req.BrokerName, systemType)

@@ -96,14 +96,14 @@ func (c *Client) RemoveConnection(payload string) error {
 
 func (c *Client) PublishQueue(payload string, queue string) error {
 	c.checkIP()
-	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.Type_QUEUE}
+	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.MessageType_MESSAGEQUEUE}
 	_, err := c.messageClient.AddMessage(context.Background(), &request)
 	return err
 }
 
 func (c *Client) PublishTopic(payload string, queue string) error {
 	c.checkIP()
-	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.Type_TOPIC}
+	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.MessageType_MESSAGETOPIC}
 	_, err := c.messageClient.AddMessage(context.Background(), &request)
 	return err
 }
@@ -190,7 +190,7 @@ func (c *Client) ReceiveQueueMessage() (string, error) {
 		c.resetDuringConsumption = false
 	}
 
-	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.Type_QUEUE}
+	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.MessageType_MESSAGEQUEUE}
 	err := c.queueMessageClient.Send(&request)
 	if err != nil {
 		return "", nil

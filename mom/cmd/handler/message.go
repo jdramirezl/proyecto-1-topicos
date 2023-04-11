@@ -23,7 +23,7 @@ func (q *MessageService) AddMessage(ctx context.Context, messageRequest *message
 func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *message.MessageRequest) (*empty.Empty, error) {
 	systemType := proto_cluster.Type_QUEUE
 	messageType := messageRequest.Type
-	if messageType == proto_message.Type_TOPIC {
+	if messageType == proto_message.MessageType_MESSAGETOPIC {
 		systemType = proto_cluster.Type_TOPIC
 	}
 
@@ -58,7 +58,7 @@ func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMes
 
 		systemType := proto_cluster.Type_QUEUE
 		messageType := request.Type
-		if messageType == proto_message.Type_TOPIC {
+		if messageType == proto_message.MessageType_MESSAGETOPIC {
 			systemType = proto_cluster.Type_TOPIC
 		}
 
