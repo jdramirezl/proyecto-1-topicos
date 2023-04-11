@@ -40,7 +40,8 @@ No funcionales:
 
 # 2. Información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 
-TODO: ALKSDJF;LASDJF;KLAJSDFL;A IMAGEN
+![Deployment Top  Telematica (1)](https://user-images.githubusercontent.com/65835577/231276443-dddecf15-2b8f-46aa-b995-34e72810e23f.png)
+
 
 - Arquitectura distribuida Peer-to-Peer semiestructurado con servidor para resolver el maestro.
 - Mejores practicas:
@@ -146,4 +147,4 @@ Para usar cada una de estas rutas, se debe enviar un request GET con los paramet
 ## sitio2-url
 ## url de donde tomo info para desarrollar este proyecto
 
-#### versión README.md -> 1.0 (2022-agosto)
+#### versión README.md -> 1.0 (2023-abril)
