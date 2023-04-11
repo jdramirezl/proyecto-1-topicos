@@ -3,6 +3,8 @@ package mom
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/broker"
 
@@ -35,6 +37,9 @@ type MomService interface {
 	EnableConsumer(brokerName string, consumerIP string, messageType message.MessageType) error
 	GetBroker(brokerName string, systemType proto_cluster.Type) (broker.Broker, error)
 	GetConfig() *cluster.Config
+	Reset()
+	GetImGaye() func()
+	Update()
 }
 
 type momService struct {
@@ -50,10 +55,48 @@ func NewMomService() MomService {
 		connections: []string{},
 		Config:      cluster.NewConfig(),
 	}
+
+	m.Config.SetFunc(m.Update)
+
 	if m.Config.IsLeader() {
 		m.StartConsumption()
 	}
 	return m
+}
+
+func (s *momService) Reset() {
+	s.topics = map[string]*broker.Topic{}
+	s.queues = map[string]*broker.Queue{}
+	s.connections = []string{}
+	s.Config.Reset()
+}
+
+func (s *momService) Update() {
+	go func() {
+		conf := s.GetConfig()
+		for {
+
+			time.Sleep(time.Second * 25)
+
+			fmt.Println("started catching up of peer")
+			for _, conn := range conf.GetPeers() {
+
+				conf.CatchYouUp(
+					conn,
+					s.GetConnections(),
+					s.GetQueues(),
+					s.GetTopics(),
+				)
+			}
+
+		}
+	}()
+}
+
+func (s *momService) GetImGaye() func() {
+	return func() {
+
+	}
 }
 
 func (s *momService) IsConnected(userIP string) bool {
@@ -120,6 +163,7 @@ func (s *momService) StartConsumption() {
 
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
+	fmt.Println("Connection new received: " + address)
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
 			client := proto_cluster.NewClusterServiceClient(conn)
@@ -134,7 +178,7 @@ func (s *momService) CreateConnection(address string) {
 
 // Delete a connection from the list of active connections
 func (s *momService) DeleteConnection(deleteAddress string) {
-
+	fmt.Println("Connection delete received: " + deleteAddress)
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
 			client := proto_cluster.NewClusterServiceClient(conn)

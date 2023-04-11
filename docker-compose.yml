@@ -6,8 +6,7 @@ services:
       context: .
       dockerfile: ./consumer/Dockerfile
     command: air
-    env_file:
-      - ./consumer/.env
+    # environment:
     networks:
       - proyecto-1
     expose:
@@ -19,17 +18,18 @@ services:
     build:
       context: .
       dockerfile: ./gateway/Dockerfile
-    command: air
+    command: go run ./gateway/cmd/main.go
     environment:
       - MOM_HOST=resolver
       - MOM_PORT=8080
       - CLUSTER_PORT=8080
-    env_file:
-      - ./gateway/.env
+      - PORT=8080
     networks:
       - proyecto-1
     expose:
       - "8080"
+    ports:
+      - 3000:8080
     # volumes:
     #   - ./gateway:/app
 
@@ -71,7 +71,7 @@ services:
   follower-1:
     build:
       context: ./mom
-    command: go run ./cmd/node/main.go
+    command: bash -c "sleep 10s && go run ./cmd/node/main.go"
     environment:
       - RESOLVER_IP=resolver
       - RESOLVER_PORT=8080
@@ -85,13 +85,14 @@ services:
       - "8080"
     depends_on:
       - resolver
+      - leader
     volumes:
       - ./mom:/app
 
   follower-2:
     build:
       context: ./mom
-    command: go run ./cmd/node/main.go
+    command: bash -c "sleep 30s && go run ./cmd/node/main.go"
     environment:
       - RESOLVER_IP=resolver
       - RESOLVER_PORT=8080
@@ -105,6 +106,7 @@ services:
       - 8080
     depends_on:
       - resolver
+      - follower-1
     volumes:
       - ./mom:/app
 

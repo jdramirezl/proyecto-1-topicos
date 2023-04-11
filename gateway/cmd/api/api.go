@@ -148,6 +148,7 @@ func NewRouter() http.Handler {
 		}
 
 		connectionIP := r.URL.Query().Get("IP")
+		fmt.Println("ConnectedIP: " + connectionIP)
 		err = momClient.AddConnection(connectionIP)
 
 		safe = CheckError(err, "Error connecting: ", "Can't connect", w)

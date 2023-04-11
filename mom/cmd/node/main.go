@@ -24,7 +24,6 @@ func main() {
 		panic(err)
 	}
 	server := grpc.NewServer()
-
 	momService := mom.NewMomService()
 	h := handler.NewHandler(momService, nil)
 	message.RegisterMessageServiceServer(server, h.QueueService)
@@ -35,5 +34,4 @@ func main() {
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-
 }

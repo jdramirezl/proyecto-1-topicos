@@ -29,6 +29,7 @@ type Config struct {
 	interval        time.Duration
 	selfIP          string
 	resolverConn    *grpc.ClientConn
+	ImGaye          func()
 }
 
 func NewConfig() *Config {
@@ -43,9 +44,9 @@ func NewConfig() *Config {
 	_resolverPort := os.Getenv("RESOLVER_PORT")
 	_resolverAddress := _resolverIP + ":" + _resolverPort
 
-	_resolverConn, err := grpc.Dial(_resolverAddress, grpc.WithInsecure())
-	fmt.Println(err)
-	fmt.Print(_resolverAddress)
+	_resolverConn, _ := grpc.Dial(_resolverAddress, grpc.WithInsecure())
+	// fmt.Println(err)
+	// fmt.Print(_resolverAddress)
 	_leaderIP := GetLeader(_selfAddress, _resolverConn)
 
 	conf := Config{
@@ -54,27 +55,36 @@ func NewConfig() *Config {
 		peerIPs:         []string{},
 		peerConnections: []*grpc.ClientConn{},
 		leaderIP:        _leaderIP,
-		timeout:         time.Now().Unix() + 15, // Revisar
+		timeout:         time.Now().Add(30 * time.Second).Unix(), // Revisar
 		interval:        2 * time.Second,
 		selfIP:          _selfAddress,
 		resolverConn:    _resolverConn, // TODO
 	}
-	fmt.Println(conf)
+	// fmt.Println(conf)
 
 	if !conf.IsLeader() {
 		conf.AddPeer(_leaderIP)
 		conf.join(_selfAddress)
 		conf.watchLeader()
 	} else {
+
 		conf.watchPeers()
 	}
 
 	return &conf
 }
 
+func (c *Config) SetFunc(f func()) {
+	c.ImGaye = f
+}
+
 // ------ GETS -----------
 func (c *Config) GetPeers() []*grpc.ClientConn {
 	return c.peerConnections
+}
+func (c *Config) Reset() {
+	c.peerIPs = []string{}
+	c.peerConnections = []*grpc.ClientConn{}
 }
 
 // ---------- Check Leader ----------
@@ -85,9 +95,9 @@ func (c *Config) IsLeader() bool {
 func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 	client := proto_resolver.NewResolverServiceClient(resolverConn)
 
-	res, err := client.GetMaster(context.Background(), &emptypb.Empty{})
-	fmt.Println(err)
-	fmt.Println("8===============D")
+	res, _ := client.GetMaster(context.Background(), &emptypb.Empty{})
+	// fmt.Println(err)
+	// fmt.Println("8===============D")
 	_leaderIP := res.Ip
 
 	if _leaderIP == "" {
@@ -103,22 +113,42 @@ func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 	return _leaderIP
 }
 
+func printConnections(conns []*grpc.ClientConn) {
+	fmt.Println("Printing connections------")
+	fmt.Print("[")
+	for _, conn := range conns {
+		fmt.Print(getHost(conn.Target()) + ", ")
+	}
+	fmt.Print("]")
+	fmt.Println()
+}
+
 // ---------- Add a peer ----------
 // Receiver
 func (c *Config) AddPeer(peerIP string) {
-	c.peerIPs = append(c.peerIPs, peerIP)
-	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
-	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
-
 	if c.IsLeader() {
 		// Add peer to others
+		fmt.Println("New peer leader!: ")
+		printConnections(c.peerConnections)
 		c.join(peerIP)
+	} else {
+		fmt.Println("New peer!: ")
+		printConnections(c.peerConnections)
 	}
 
+	c.peerIPs = append(c.peerIPs, peerIP)
+	fmt.Print("before")
+	printConnections(c.peerConnections)
+	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
+	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
+	fmt.Print("after")
+	printConnections(c.peerConnections)
 }
 
 // Sender
 func (c *Config) join(ip string) {
+	fmt.Println("In join!!")
+	printConnections(c.peerConnections)
 	for _, conn := range c.peerConnections {
 		client := proto_cluster.NewClusterServiceClient(conn)
 
@@ -175,12 +205,12 @@ func (c *Config) watchLeader() {
 				fmt.Println("Im voting so stop!: " + c.selfIP)
 				break
 			}
-			fmt.Println("Time now is: " + fmt.Sprint(time.Now().Unix()))
-			fmt.Println("TimeOUT is: " + fmt.Sprint(c.timeout))
-			fmt.Println("Start election?: " + fmt.Sprint(time.Now().Unix() > c.timeout))
+			// fmt.Println("Time now is: " + fmt.Sprint(time.Now().Unix()))
+			// fmt.Println("TimeOUT is: " + fmt.Sprint(c.timeout))
+			// fmt.Println("Start election?: " + fmt.Sprint(time.Now().Unix() > c.timeout))
 			if time.Now().Unix() > c.timeout {
 				c.startElection()
-				time.Sleep(c.interval)
+				break
 			}
 			time.Sleep(c.interval)
 		}
@@ -192,7 +222,6 @@ func (c *Config) watchPeers() {
 	go func() {
 
 		for {
-			time.Sleep(c.interval)
 			if c.isVoting {
 				fmt.Println("Im leader and voting so stop!: " + c.selfIP)
 				break
@@ -206,31 +235,38 @@ func (c *Config) watchPeers() {
 
 // Receiver
 func (c *Config) RefreshTimeout() {
-	fmt.Println("Refreshing timeout...")
-	c.timeout = time.Now().Unix() + 15 // TODO
+	//fmt.Println("Refreshing timeout...")
+	c.timeout = time.Now().Add(30 * time.Second).Unix() // TODO
+	return
+}
+
+func (c *Config) sendBeat(conn *grpc.ClientConn) {
+	// target := conn.Target()
+	// fmt.Println("xd")
+	// fmt.Println("Refreshing: " + string(target[:strings.IndexByte(target, ':')]))
+	client := proto_cluster.NewClusterServiceClient(conn)
+
+	// deadline := time.Now().Add(5 * time.Second)
+	// ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	// defer cancel()
+
+	_, err := client.Heartbeat(context.Background(), &emptypb.Empty{})
+
+	// // Check if slave is still alive
+	if err != nil {
+		if status.Code(err) == codes.DeadlineExceeded {
+			// slave did not respond to heartbeat, remove it from the list
+			c.orderRemove(getHost(conn.Target()))
+		}
+	}
 	return
 }
 
 // Sender
 func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
-	fmt.Println("Im master and im refreshing!")
+	// fmt.Println("Im master and im refreshing!")
 	for _, conn := range c.peerConnections {
-		target := conn.Target()
-		fmt.Println("Refreshing: " + string(target[:strings.IndexByte(target, ':')]))
-		client := proto_cluster.NewClusterServiceClient(conn)
-		deadline := time.Now().Add(5 * time.Second)
-		ctx, cancel := context.WithDeadline(context.Background(), deadline)
-		defer cancel()
-		_, err := client.Heartbeat(ctx, &emptypb.Empty{})
-
-		// Check if slave is still alive
-		if err != nil {
-			if status.Code(err) == codes.DeadlineExceeded {
-				// slave did not respond to heartbeat, remove it from the list
-				c.orderRemove(getHost(conn.Target()))
-			}
-		}
-		return
+		c.sendBeat(conn)
 	}
 }
 
@@ -242,15 +278,25 @@ func getHost(target string) string {
 // ---------- Election ----------
 func (c *Config) startElection() {
 	fmt.Println("Starting Election")
+	printConnections(c.peerConnections)
 	newLeader := c.selfIP
 	bestTime := c.uptime
 	c.isVoting = true
-
+	fmt.Println("Im " + getHost(c.selfIP) + " with uptime " + fmt.Sprint(bestTime))
 	for _, conn := range c.peerConnections {
+		fmt.Println("Comparing! " + getHost(conn.Target()) + " =/=? " + getHost(c.leaderIP))
+		if getHost(conn.Target()) == getHost(c.leaderIP) {
+			continue
+		}
+
+		fmt.Println("Passed comparison. Looking at " + getHost(conn.Target()))
+
 		client := proto_cluster.NewClusterServiceClient(conn)
 		res, _ := client.ElectLeader(context.Background(), &emptypb.Empty{})
 
 		uptime := res.Uptime
+
+		fmt.Println("With uptime " + fmt.Sprint(uptime))
 
 		if uptime > bestTime {
 			newLeader = getHost(conn.Target())
@@ -266,6 +312,8 @@ func (c *Config) startElection() {
 		req := proto_resolver.MasterMessage{Ip: c.selfIP}
 		client.NewMaster(context.Background(), &req)
 
+		c.ImGaye()
+
 		c.watchPeers()
 
 	} else {
@@ -279,16 +327,28 @@ func (c *Config) GetUptime() int64 {
 }
 
 func (c *Config) CatchYouUp(
+	follower_conn *grpc.ClientConn,
 	connections []string,
 	queues map[string]*broker.Queue,
 	topics map[string]*broker.Topic,
 ) {
-	follower_conn := c.peerConnections[len(c.peerConnections)-1]
+	fmt.Println("Starting to catchUp! Catching up: " + getHost(follower_conn.Target()))
 	cluster_client := proto_cluster.NewClusterServiceClient(follower_conn)
 	message_client := proto_message.NewMessageServiceClient(follower_conn)
 
+	cluster_client.Reset(context.Background(), &emptypb.Empty{})
+
+	req := proto_cluster.PeerRequest{
+		Ip: c.selfIP,
+	}
+	cluster_client.AddPeer(context.Background(), &req)
+
 	// Add Peers
 	for _, ip := range c.peerIPs {
+		fmt.Println("Sending ip in catch up: " + ip)
+		if getHost(ip) == getHost(follower_conn.Target()) {
+			continue
+		}
 		req := proto_cluster.PeerRequest{
 			Ip: ip,
 		}

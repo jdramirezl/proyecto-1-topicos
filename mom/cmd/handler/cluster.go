@@ -6,9 +6,19 @@ import (
 
 	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	proto_message "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )
+
+func (c *ClusterService) Reset(ctx context.Context, emp *empty.Empty) (*empty.Empty, error) {
+	c.momService.Reset()
+	return &emptypb.Empty{}, nil
+}
+
+func (c *ClusterService) Update() {
+	c.momService.Update()
+}
 
 func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *proto_cluster.SystemRequest) (*empty.Empty, error) {
 	Type := req.Type
@@ -87,12 +97,15 @@ func (c *ClusterService) RemoveConnection(ctx context.Context, req *proto_cluste
 
 func (c *ClusterService) AddPeer(ctx context.Context, req *proto_cluster.PeerRequest) (*empty.Empty, error) {
 	conf := c.momService.GetConfig()
-	mom := c.momService
-	conf.AddPeer(req.Ip)
 
 	if conf.IsLeader() {
-		conf.CatchYouUp(mom.GetConnections(), mom.GetQueues(), mom.GetTopics())
+		c.Update()
 	}
+
+	// mom := c.momService
+	fmt.Println("why are you gae")
+	fmt.Println(req.Ip)
+	conf.AddPeer(req.Ip)
 
 	return &empty.Empty{}, nil
 }
@@ -103,7 +116,7 @@ func (c *ClusterService) RemovePeer(ctx context.Context, req *proto_cluster.Peer
 }
 
 func (c *ClusterService) Heartbeat(ctx context.Context, emp *empty.Empty) (*empty.Empty, error) {
-	fmt.Println("Got refresh request!")
+	// fmt.Println("Got refresh request!")
 	c.momService.GetConfig().RefreshTimeout()
 	return &empty.Empty{}, nil
 }

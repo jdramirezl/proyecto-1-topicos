@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
@@ -26,9 +27,11 @@ type Client struct {
 
 func NewClient(host, port string) Client {
 	grpcConnResolver, err := connection.NewGrpcClient(host, port)
+	fmt.Println("8==================D")
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("8==================D")
 	resolverClient := resolver.NewResolverServiceClient(grpcConnResolver)
 
 	res, err := resolverClient.GetMaster(context.Background(), &empty.Empty{})
@@ -40,6 +43,7 @@ func NewClient(host, port string) Client {
 	clusterPort := os.Getenv("CLUSTER_PORT")
 
 	grpcConn, err := connection.NewGrpcClient(ip, clusterPort)
+	fmt.Println("8==================D")
 	if err != nil {
 		panic(err)
 	}
@@ -63,9 +67,11 @@ func (c *Client) checkIP() {
 	if res.Ip != c.masterIP {
 
 		ip := res.Ip
-		clusterPort := os.Getenv("CLUSTER_PORT")
+		// clusterPort := os.Getenv("CLUSTER_PORT")
 
-		grpcConn, err := connection.NewGrpcClient(ip, clusterPort)
+		fmt.Println(ip)
+		host, port, _ := net.SplitHostPort(ip)
+		grpcConn, err := connection.NewGrpcClient(host, port)
 		c.masterIP = ip
 		if err != nil {
 			panic(err)
