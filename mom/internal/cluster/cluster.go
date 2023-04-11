@@ -61,6 +61,9 @@ func NewConfig() *Config {
 }
 
 // ------ GETS -----------
+func (c *Config) GetPeers() []*grpc.ClientConn {
+	return c.peerConnections
+}
 
 // ---------- Check Leader ----------
 func (c *Config) IsLeader() bool {

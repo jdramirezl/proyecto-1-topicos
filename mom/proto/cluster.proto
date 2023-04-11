@@ -28,9 +28,14 @@ message ConnectionRequest {
     string ip = 1;
 }
 
-
 message electLeaderResponse {
     int64 uptime = 1;
+}
+
+message EnableConsumerRequest {
+    string ip = 1;
+    string brokerName = 2;
+    Type type = 3;
 }
 
 service ClusterService {
@@ -46,6 +51,7 @@ service ClusterService {
     rpc AddPeer(PeerRequest) returns (google.protobuf.Empty) {};
     rpc RemovePeer(PeerRequest) returns (google.protobuf.Empty) {};
 
+    rpc EnableConsumer(EnableConsumerRequest) returns (google.protobuf.Empty) {}
     
     rpc Heartbeat (google.protobuf.Empty) returns (google.protobuf.Empty){};
     

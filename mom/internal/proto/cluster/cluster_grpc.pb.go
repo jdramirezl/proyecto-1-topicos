@@ -31,6 +31,7 @@ type ClusterServiceClient interface {
 	RemoveConnection(ctx context.Context, in *ConnectionRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	AddPeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemovePeer(ctx context.Context, in *PeerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	EnableConsumer(ctx context.Context, in *EnableConsumerRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	Heartbeat(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
 	ElectLeader(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ElectLeaderResponse, error)
 }
@@ -115,6 +116,15 @@ func (c *clusterServiceClient) RemovePeer(ctx context.Context, in *PeerRequest, 
 	return out, nil
 }
 
+func (c *clusterServiceClient) EnableConsumer(ctx context.Context, in *EnableConsumerRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/ClusterService/EnableConsumer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *clusterServiceClient) Heartbeat(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/ClusterService/Heartbeat", in, out, opts...)
@@ -145,6 +155,7 @@ type ClusterServiceServer interface {
 	RemoveConnection(context.Context, *ConnectionRequest) (*empty.Empty, error)
 	AddPeer(context.Context, *PeerRequest) (*empty.Empty, error)
 	RemovePeer(context.Context, *PeerRequest) (*empty.Empty, error)
+	EnableConsumer(context.Context, *EnableConsumerRequest) (*empty.Empty, error)
 	Heartbeat(context.Context, *empty.Empty) (*empty.Empty, error)
 	ElectLeader(context.Context, *empty.Empty) (*ElectLeaderResponse, error)
 	mustEmbedUnimplementedClusterServiceServer()
@@ -177,6 +188,9 @@ func (UnimplementedClusterServiceServer) AddPeer(context.Context, *PeerRequest) 
 }
 func (UnimplementedClusterServiceServer) RemovePeer(context.Context, *PeerRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePeer not implemented")
+}
+func (UnimplementedClusterServiceServer) EnableConsumer(context.Context, *EnableConsumerRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnableConsumer not implemented")
 }
 func (UnimplementedClusterServiceServer) Heartbeat(context.Context, *empty.Empty) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
@@ -341,6 +355,24 @@ func _ClusterService_RemovePeer_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClusterService_EnableConsumer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableConsumerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterServiceServer).EnableConsumer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ClusterService/EnableConsumer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterServiceServer).EnableConsumer(ctx, req.(*EnableConsumerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ClusterService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
@@ -415,6 +447,10 @@ var ClusterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePeer",
 			Handler:    _ClusterService_RemovePeer_Handler,
+		},
+		{
+			MethodName: "EnableConsumer",
+			Handler:    _ClusterService_EnableConsumer_Handler,
 		},
 		{
 			MethodName: "Heartbeat",

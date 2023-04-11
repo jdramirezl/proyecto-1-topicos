@@ -26,7 +26,7 @@ services:
   resolver:
     build:
       context: ./mom
-    command: air
+    command: go run ./cmd/resolver/main.go
     environment:
       - PORT=8080
     env_file:
@@ -37,7 +37,8 @@ services:
   leader:
     build:
       context: ./mom
-    command: air
+    # command: air --target="./cmd/node/main.go"
+    command: go run ./cmd/node/main.go
     env_file:
       - ./mom/.env
     environment:
@@ -48,7 +49,8 @@ services:
   follower-1:
     build:
       context: ./mom
-    command: sleep 15s && air
+    # command: sleep 15s && air --target="./cmd/resolver/main.go"
+    command: go run ./cmd/node/main.go
     env_file:
       - ./mom/.env
     environment:
@@ -59,7 +61,8 @@ services:
   follower-2:
     build:
       context: ./mom
-    command: sleep 30s && air
+    # command: sleep 30s && air --target="./cmd/resolver/main.go"
+    command: go run ./cmd/node/main.go
     env_file:
       - ./mom/.env
     environment:

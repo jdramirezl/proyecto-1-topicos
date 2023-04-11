@@ -13,13 +13,13 @@ import (
 )
 
 type Client struct {
-	messageClient      message.MessageServiceClient
-	clusterClient      cluster.ClusterServiceClient
-	resolverClient     resolver.ResolverServiceClient
-	isConsuming        bool
-	brokerName         string
-	queueMessageClient message.MessageService_ConsumeMessageClient
-	masterIP           string
+	messageClient          message.MessageServiceClient
+	clusterClient          cluster.ClusterServiceClient
+	resolverClient         resolver.ResolverServiceClient
+	isConsuming            bool
+	brokerName             string
+	queueMessageClient     message.MessageService_ConsumeMessageClient
+	masterIP               string
 	resetDuringConsumption bool
 }
 
@@ -46,14 +46,14 @@ func NewClient(host, port string) Client {
 	clusterClient := cluster.NewClusterServiceClient(grpcConn)
 
 	return Client{
-		masterIP: ip,
+		masterIP:       ip,
 		resolverClient: resolverClient,
-		messageClient: messageClient,
-		clusterClient: clusterClient
+		messageClient:  messageClient,
+		clusterClient:  clusterClient,
 	}
 }
 
-func (c *Client) checkIP(payload string) {
+func (c *Client) checkIP() {
 
 	res, err := c.resolverClient.GetMaster(context.Background(), &empty.Empty{})
 	if err != nil {
@@ -74,7 +74,7 @@ func (c *Client) checkIP(payload string) {
 		c.messageClient = messageClient
 		c.clusterClient = clusterClient
 
-		if c.isConsuming{
+		if c.isConsuming {
 			c.resetDuringConsumption = true
 		}
 	}
@@ -140,35 +140,35 @@ func (c *Client) UnSubscribeTopic(name string, ip string) error {
 
 func (c *Client) CreateQueue(name string, creator string) error {
 	c.checkIP()
-	request := cluster.SystemRequest{Name: name, Type: cluster.Type_QUEUE, Creator: ip}
+	request := cluster.SystemRequest{Name: name, Type: cluster.Type_QUEUE, Creator: creator}
 	_, err := c.clusterClient.AddMessagingSystem(context.Background(), &request)
 	return err
 }
 
 func (c *Client) CreateTopic(name string, creator string) error {
 	c.checkIP()
-	request := cluster.SystemRequest{Name: name, Type: cluster.Type_TOPIC, Creator: ip}
+	request := cluster.SystemRequest{Name: name, Type: cluster.Type_TOPIC, Creator: creator}
 	_, err := c.clusterClient.AddMessagingSystem(context.Background(), &request)
 	return err
 }
 
 func (c *Client) DeleteQueue(name string, creator string) error {
 	c.checkIP()
-	request := cluster.SystemRequest{Name: name, Type: cluster.Type_QUEUE, Creator: ip}
+	request := cluster.SystemRequest{Name: name, Type: cluster.Type_QUEUE, Creator: creator}
 	_, err := c.clusterClient.RemoveMessagingSystem(context.Background(), &request)
 	return err
 }
 
 func (c *Client) DeleteTopic(name string, creator string) error {
 	c.checkIP()
-	request := cluster.SystemRequest{Name: name, Type: cluster.Type_TOPIC, Creator: ip}
+	request := cluster.SystemRequest{Name: name, Type: cluster.Type_TOPIC, Creator: creator}
 	_, err := c.clusterClient.RemoveMessagingSystem(context.Background(), &request)
 	return err
 }
 
 func (c *Client) ConnectQueue(queueName string) error {
 	c.checkIP()
-	client, err := c.messageClient.ConsumeMessage()
+	client, err := c.messageClient.ConsumeMessage(context.Background())
 	c.brokerName = queueName
 	c.queueMessageClient = client
 	c.isConsuming = true

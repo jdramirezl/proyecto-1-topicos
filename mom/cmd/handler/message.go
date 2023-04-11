@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"fmt"
+	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	"jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 	"net"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -19,7 +21,13 @@ func (q *MessageService) AddMessage(ctx context.Context, messageRequest *message
 }
 
 func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *message.MessageRequest) (*empty.Empty, error) {
-	broker, err := q.momService.GetBroker(messageRequest.Name, messageRequest.Type)
+	systemType := proto_cluster.Type_QUEUE
+	messageType := messageRequest.Type
+	if messageType == proto_message.Type_TOPIC {
+		systemType = proto_cluster.Type_TOPIC
+	}
+
+	broker, err := q.momService.GetBroker(messageRequest.Name, systemType)
 	if err != nil {
 		return &empty.Empty{}, err
 	}
@@ -47,7 +55,14 @@ func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMes
 		if err != nil {
 			return err
 		}
-		broker, err := q.momService.GetBroker(request.Name, request.Type)
+
+		systemType := proto_cluster.Type_QUEUE
+		messageType := request.Type
+		if messageType == proto_message.Type_TOPIC {
+			systemType = proto_cluster.Type_TOPIC
+		}
+
+		broker, err := q.momService.GetBroker(request.Name, systemType)
 		if err != nil {
 			return err
 		}

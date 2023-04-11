@@ -4,7 +4,7 @@ import (
 	"context"
 
 	proto_cluster "jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
-	message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
+	proto_message "jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
 )
@@ -43,11 +43,11 @@ func (c *ClusterService) AddSubscriber(ctx context.Context, req *proto_cluster.S
 	Name := req.Name
 	Creator := req.Ip
 
-	var final message.Type
+	var final proto_cluster.Type
 	if Type == 0 {
-		final = message.Type_QUEUE
+		final = proto_cluster.Type_QUEUE
 	} else {
-		final = message.Type_TOPIC
+		final = proto_cluster.Type_TOPIC
 	}
 
 	c.momService.Subscribe(Name, Creator, final)
@@ -60,11 +60,11 @@ func (c *ClusterService) RemoveSubscriber(ctx context.Context, req *proto_cluste
 	Name := req.Name
 	Creator := req.Ip
 
-	var final message.Type
+	var final proto_cluster.Type
 	if Type == 0 {
-		final = message.Type_QUEUE
+		final = proto_cluster.Type_QUEUE
 	} else {
-		final = message.Type_TOPIC
+		final = proto_cluster.Type_TOPIC
 	}
 
 	c.momService.Unsubscribe(Name, Creator, final)
@@ -112,4 +112,20 @@ func (c *ClusterService) ElectLeader(ctx context.Context, emp *empty.Empty) (*pr
 		Uptime: uptime,
 	}
 	return res, nil
+}
+
+func (c *ClusterService) EnableConsumer(ctx context.Context, req *proto_cluster.EnableConsumerRequest) (*empty.Empty, error) {
+	messageType := req.Type
+
+	systemType := proto_message.Type_QUEUE
+	if messageType == proto_cluster.Type_TOPIC {
+		systemType = proto_message.Type_TOPIC
+	}
+
+	err := c.momService.EnableConsumer(req.Ip, req.BrokerName, systemType)
+	if err != nil {
+		return &empty.Empty{}, err
+	}
+
+	return &empty.Empty{}, nil
 }
