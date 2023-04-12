@@ -3,14 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
-	"net"
 
 	proto_cluster "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 	proto_message "github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/grpc/peer"
 )
 
 func (q *MessageService) AddMessage(ctx context.Context, messageRequest *message.MessageRequest) (*empty.Empty, error) {
@@ -37,39 +35,38 @@ func (q *MessageService) RemoveMessage(ctx context.Context, messageRequest *mess
 }
 
 func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMessageServer) error {
-	peer, ok := peer.FromContext(stream.Context())
-	if !ok {
-		return fmt.Errorf("failed to extract peer from context")
-	}
-	addr := peer.Addr.String()
-	consumerIP, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		return fmt.Errorf("failed to split host and port: %v", err)
-	}
 
 	for {
 		request, err := stream.Recv()
 		if err != nil {
 			return err
 		}
-		err = q.momService.EnableConsumer(request.Name, consumerIP, request.Type)
+		fmt.Println("1")
+		consumerIp := request.Ip
+		err = q.momService.EnableConsumer(request.Name, consumerIp, request.Type)
 		if err != nil {
 			return err
 		}
 
+		fmt.Println("2")
 		systemType := proto_cluster.Type_QUEUE
 		messageType := request.Type
 		if messageType == proto_message.MessageType_MESSAGETOPIC {
 			systemType = proto_cluster.Type_TOPIC
 		}
 
+		fmt.Println("3")
 		broker, err := q.momService.GetBroker(request.Name, systemType)
 		if err != nil {
 			return err
 		}
-		payload := <-broker.GetConsumerChannel(consumerIP)
+
+		fmt.Println("4")
+		fmt.Println(consumerIp)
+		payload := <-broker.GetConsumerChannel(consumerIp)
 		response := &message.ConsumeMessageResponse{Payload: payload}
 		// sincronizar con replicas
+		fmt.Println("5")
 		err = stream.Send(response)
 		if err != nil {
 			return err

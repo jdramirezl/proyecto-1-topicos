@@ -21,7 +21,6 @@ var (
 )
 
 type MomService interface {
-	StartConsumption()
 	CreateConnection(address string)
 	DeleteConnection(address string)
 	GetConnections() []string
@@ -58,10 +57,25 @@ func NewMomService() MomService {
 
 	m.Config.SetFunc(m.Update)
 
-	if m.Config.IsLeader() {
-		m.StartConsumption()
-	}
+	m.LeaderActions()
 	return m
+}
+
+func (s *momService) LeaderActions() {
+	go func() {
+		for {
+			if s.Config.IsLeader() {
+				for _, queue := range s.queues {
+					queue.Consume()
+				}
+
+				for _, topic := range s.topics {
+					topic.Consume()
+				}
+				return
+			}
+		}
+	}()
 }
 
 func (s *momService) Reset() {
@@ -78,7 +92,7 @@ func (s *momService) Update() {
 
 			time.Sleep(time.Second * 25)
 
-			fmt.Println("started catching up of peer")
+			// fmt.Println("started catching up of peer")
 			for _, conn := range conf.GetPeers() {
 
 				conf.CatchYouUp(
@@ -116,7 +130,7 @@ func (s *momService) IsSubscribed(name string, messageType message.MessageType, 
 		system = s.topics[name]
 	}
 
-	for _, cons := range *system.GetConsumers() {
+	for _, cons := range system.GetConsumers() {
 		if cons.IP == userIP {
 			return true
 		}
@@ -152,18 +166,9 @@ func (s *momService) GetConfig() *cluster.Config {
 	return s.Config
 }
 
-func (s *momService) StartConsumption() {
-	for _, queue := range s.queues {
-		queue.Consume()
-	}
-	for _, topic := range s.topics {
-		topic.Consume()
-	}
-}
-
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
-	fmt.Println("Connection new received: " + address)
+	// fmt.Println("Connection new received: " + address)
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
 			client := proto_cluster.NewClusterServiceClient(conn)
@@ -208,6 +213,9 @@ func (s *momService) CreateQueue(name string, clientIP string) error {
 		return ErrSystemExists
 	}
 
+	// fmt.Println("======= creating queue before ======")
+	// fmt.Println(s.queues)
+
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
 			client := proto_cluster.NewClusterServiceClient(conn)
@@ -223,18 +231,24 @@ func (s *momService) CreateQueue(name string, clientIP string) error {
 	queue := broker.NewQueue(clientIP)
 	s.queues[name] = queue
 
+	if s.Config.IsLeader() {
+		s.queues[name].Consume()
+	}
+
+	// fmt.Println("======= creating queue after ======")
+	// fmt.Println(s.queues)
+
 	return nil
 }
 
 // Delete the queue with the given name
 func (s *momService) DeleteQueue(name string, clientIp string) error {
 	if clientIp != s.queues[name].Creator {
+		// fmt.Println("not creator")
 		return ErrBrokerNotFound
 	}
 
-	if !s.IsSubscribed(name, message.MessageType_MESSAGEQUEUE, clientIp) {
-		return ErrNotSubscribed
-	}
+	// fmt.Println("DELETING QUEUE IN MOM: " + name)
 
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
@@ -247,8 +261,11 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 			client.RemoveMessagingSystem(context.Background(), &req)
 		}
 	}
-
+	// fmt.Println("Before delete")
+	// fmt.Println(s.queues)
 	delete(s.queues, name)
+	// fmt.Println("After delete")
+	// fmt.Println(s.queues)
 	return nil
 }
 
@@ -285,10 +302,6 @@ func (s *momService) CreateTopic(name string, clientIP string) error {
 func (s *momService) DeleteTopic(name string, clientIp string) error {
 	if clientIp != s.topics[name].Creator {
 		return ErrBrokerNotFound
-	}
-
-	if !s.IsSubscribed(name, message.MessageType_MESSAGETOPIC, clientIp) {
-		return ErrNotSubscribed
 	}
 
 	if s.Config.IsLeader() {
@@ -370,6 +383,17 @@ func (s *momService) SendMessage(brokerName string, payload string, messageType 
 		systemType = proto_cluster.Type_TOPIC
 	}
 
+	// fmt.Println("======= searching bnroker ======")
+	// fmt.Println(brokerName, payload)
+	// fmt.Println("======= queues ======")
+	// if val, ok := s.queues["default"]; ok {
+	// 	// fmt.Println("im in here")
+	// 	fmt.Println(val)
+	// }
+
+	// fmt.Println(brokerName)
+	// fmt.Println("====")
+	// fmt.Println(payload)
 	broker, err := s.GetBroker(brokerName, systemType)
 	if err != nil {
 		return err
@@ -396,11 +420,12 @@ func (s *momService) EnableConsumer(brokerName string, consumerIP string, messag
 	if messageType == message.MessageType_MESSAGETOPIC {
 		systemType = proto_cluster.Type_TOPIC
 	}
-
+	fmt.Println("im 1")
 	broker, err := s.GetBroker(brokerName, systemType)
 	if err != nil {
 		return err
 	}
+	fmt.Println("im 2")
 	broker.EnableConsumer(consumerIP)
 
 	if s.Config.IsLeader() {
@@ -421,17 +446,24 @@ func (s *momService) EnableConsumer(brokerName string, consumerIP string, messag
 
 func (s *momService) GetBroker(brokerName string, systemType proto_cluster.Type) (broker.Broker, error) {
 	if systemType == proto_cluster.Type_QUEUE {
+		// fmt.Println("i enterd here")
 		for name, queue := range s.queues {
+			// fmt.Println(name)
+			// fmt.Println(brokerName)
 			if name == brokerName {
 				return queue, nil
 			}
 		}
 	} else {
 		for name, topic := range s.topics {
+
+			// fmt.Println("im fkin gaye")
 			if name == brokerName {
 				return topic, nil
 			}
 		}
 	}
+
+	// fmt.Println("i didnt find sht")
 	return nil, ErrBrokerNotFound
 }

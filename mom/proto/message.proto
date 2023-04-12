@@ -22,6 +22,7 @@ message ConsumeMessageRequest {
 
 message ConsumeMessageResponse {
     string payload = 1;
+    string ip = 2;
 }
 
 service MessageService {

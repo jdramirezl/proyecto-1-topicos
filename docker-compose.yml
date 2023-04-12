@@ -5,14 +5,16 @@ services:
     build:
       context: .
       dockerfile: ./consumer/Dockerfile
-    command: air
-    # environment:
+    command: go run ./consumer/cmd/main.go
+    environment:
+      - SELF_IP=consumer
+      - MOM_HOST=resolver
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
     networks:
       - proyecto-1
     expose:
       - "8080"
-    # volumes:
-    #   - ./consumer:/app
 
   gateway:
     build:
@@ -20,6 +22,7 @@ services:
       dockerfile: ./gateway/Dockerfile
     command: go run ./gateway/cmd/main.go
     environment:
+      - SELF_IP=gateway
       - MOM_HOST=resolver
       - MOM_PORT=8080
       - CLUSTER_PORT=8080
@@ -30,8 +33,9 @@ services:
       - "8080"
     ports:
       - 3000:8080
-    # volumes:
-    #   - ./gateway:/app
+    depends_on:
+      - resolver
+      - leader
 
   resolver:
     build:

@@ -34,7 +34,8 @@ func NewRouter() http.Handler {
 
 	hostIP := os.Getenv("MOM_HOST")
 	hostPort := os.Getenv("MOM_PORT")
-	momClient := client.NewClient(hostIP, hostPort)
+	selfIp := os.Getenv("SELF_IP")
+	momClient := client.NewClient(hostIP, hostPort, selfIp)
 
 	mux.HandleFunc("/createSystem", func(w http.ResponseWriter, r *http.Request) {
 		_, err := ioutil.ReadAll(r.Body)

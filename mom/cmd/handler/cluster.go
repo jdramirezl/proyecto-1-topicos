@@ -25,7 +25,7 @@ func (c *ClusterService) AddMessagingSystem(ctx context.Context, req *proto_clus
 	Name := req.Name
 	Creator := req.Creator
 
-	if Type == 0 {
+	if Type == proto_cluster.Type_QUEUE {
 		c.momService.CreateQueue(Name, Creator)
 	} else {
 		c.momService.CreateTopic(Name, Creator)
@@ -40,7 +40,8 @@ func (c *ClusterService) RemoveMessagingSystem(ctx context.Context, req *proto_c
 	Name := req.Name
 	Creator := req.Creator
 
-	if Type == 0 {
+	if Type == proto_cluster.Type_QUEUE {
+		fmt.Println("DELETING QUEUE: " + Name)
 		c.momService.DeleteQueue(Name, Creator)
 	} else {
 		c.momService.DeleteTopic(Name, Creator)
@@ -103,8 +104,8 @@ func (c *ClusterService) AddPeer(ctx context.Context, req *proto_cluster.PeerReq
 	}
 
 	// mom := c.momService
-	fmt.Println("why are you gae")
-	fmt.Println(req.Ip)
+	// fmt.Println("why are you gae")
+	// fmt.Println(req.Ip)
 	conf.AddPeer(req.Ip)
 
 	return &empty.Empty{}, nil

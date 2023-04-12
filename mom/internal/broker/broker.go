@@ -12,7 +12,7 @@ type Broker interface {
 	GetMessages() *linked_list.LinkedList
 	AddConsumer(address string) chan string
 	RemoveConsumer(address string)
-	GetConsumers() *[]consumer.Consumer
+	GetConsumers() []*consumer.Consumer
 	AddMessage(message string)
 	PopMessage()
 	EnableConsumer(consumerIP string)

@@ -7,7 +7,7 @@ import (
 
 type Topic struct {
 	Messages        *linked_list.LinkedList
-	Consumers       []consumer.Consumer
+	Consumers       []*consumer.Consumer
 	CurrentConsumer int
 	ConsumerMap     map[string]chan string // Why chan string? does it matter?
 	Creator         string
@@ -18,7 +18,7 @@ func NewTopic(creator_ip string) *Topic {
 
 	t := Topic{
 		Messages:    &messageList,
-		Consumers:   []consumer.Consumer{},
+		Consumers:   []*consumer.Consumer{},
 		ConsumerMap: map[string]chan string{},
 		Creator:     creator_ip,
 	}
@@ -34,8 +34,8 @@ func (t *Topic) GetMessages() *linked_list.LinkedList {
 	return t.Messages
 }
 
-func (t *Topic) GetConsumers() *[]consumer.Consumer {
-	return &t.Consumers
+func (t *Topic) GetConsumers() []*consumer.Consumer {
+	return t.Consumers
 }
 
 func (q *Topic) Consume() {
@@ -67,7 +67,7 @@ func (q *Topic) AddConsumer(address string) chan string {
 	channel := make(chan string)
 	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.IP] = channel
-	q.Consumers = append(q.Consumers, cons)
+	q.Consumers = append(q.Consumers, &cons)
 
 	return channel
 }
@@ -77,7 +77,7 @@ func (q *Topic) RemoveConsumer(address string) {
 	if len(q.ConsumerMap) == 0 {
 		q.CurrentConsumer = -1
 	}
-	var newConsumers []consumer.Consumer
+	var newConsumers []*consumer.Consumer
 	for _, consumer := range q.Consumers {
 		if consumer.IP == address {
 			continue

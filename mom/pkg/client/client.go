@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/cluster"
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/proto/message"
@@ -23,9 +22,10 @@ type Client struct {
 	queueMessageClient     message.MessageService_ConsumeMessageClient
 	masterIP               string
 	resetDuringConsumption bool
+	selfIp                 string
 }
 
-func NewClient(host, port string) Client {
+func NewClient(host, port, selfIp string) Client {
 	grpcConnResolver, err := connection.NewGrpcClient(host, port)
 	fmt.Println("8==================D")
 	if err != nil {
@@ -40,9 +40,10 @@ func NewClient(host, port string) Client {
 	}
 
 	ip := res.Ip
-	clusterPort := os.Getenv("CLUSTER_PORT")
+	// clusterPort := os.Getenv("CLUSTER_PORT")
 
-	grpcConn, err := connection.NewGrpcClient(ip, clusterPort)
+	host, port, _ = net.SplitHostPort(ip)
+	grpcConn, err := connection.NewGrpcClient(host, port)
 	fmt.Println("8==================D")
 	if err != nil {
 		panic(err)
@@ -55,6 +56,7 @@ func NewClient(host, port string) Client {
 		resolverClient: resolverClient,
 		messageClient:  messageClient,
 		clusterClient:  clusterClient,
+		selfIp:         selfIp,
 	}
 }
 
@@ -68,7 +70,7 @@ func (c *Client) checkIP() {
 
 		ip := res.Ip
 		// clusterPort := os.Getenv("CLUSTER_PORT")
-
+		fmt.Println("am here")
 		fmt.Println(ip)
 		host, port, _ := net.SplitHostPort(ip)
 		grpcConn, err := connection.NewGrpcClient(host, port)
@@ -87,9 +89,9 @@ func (c *Client) checkIP() {
 	}
 }
 
-func (c *Client) AddConnection(payload string) error {
+func (c *Client) AddConnection(ip string) error {
 	c.checkIP()
-	request := &cluster.ConnectionRequest{Ip: payload}
+	request := &cluster.ConnectionRequest{Ip: ip}
 	_, err := c.clusterClient.AddConnection(context.Background(), request)
 	return err
 }
@@ -101,14 +103,14 @@ func (c *Client) RemoveConnection(payload string) error {
 	return err
 }
 
-func (c *Client) PublishQueue(payload string, queue string) error {
+func (c *Client) PublishQueue(queue string, payload string) error {
 	c.checkIP()
 	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.MessageType_MESSAGEQUEUE}
 	_, err := c.messageClient.AddMessage(context.Background(), &request)
 	return err
 }
 
-func (c *Client) PublishTopic(payload string, queue string) error {
+func (c *Client) PublishTopic(queue string, payload string) error {
 	c.checkIP()
 	request := message.MessageRequest{Name: queue, Payload: payload, Type: message.MessageType_MESSAGETOPIC}
 	_, err := c.messageClient.AddMessage(context.Background(), &request)
@@ -173,10 +175,10 @@ func (c *Client) DeleteTopic(name string, creator string) error {
 	return err
 }
 
-func (c *Client) ConnectQueue(queueName string) error {
+func (c *Client) Connect(name string) error {
 	c.checkIP()
 	client, err := c.messageClient.ConsumeMessage(context.Background())
-	c.brokerName = queueName
+	c.brokerName = name
 	c.queueMessageClient = client
 	c.isConsuming = true
 	if err != nil {
@@ -193,11 +195,34 @@ func (c *Client) ReceiveQueueMessage() (string, error) {
 		return "", fmt.Errorf("client is not consuming")
 	}
 	if c.resetDuringConsumption {
-		c.ConnectQueue(c.brokerName)
+		c.Connect(c.brokerName)
 		c.resetDuringConsumption = false
 	}
 
-	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.MessageType_MESSAGEQUEUE}
+	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.MessageType_MESSAGEQUEUE, Ip: c.selfIp}
+	err := c.queueMessageClient.Send(&request)
+	if err != nil {
+		return "", nil
+	}
+	msg, err := c.queueMessageClient.Recv()
+	if err != nil {
+		return "", nil
+	}
+	return msg.Payload, nil
+}
+
+func (c *Client) ReceiveTopicMessage() (string, error) {
+	c.checkIP()
+
+	if !c.isConsuming {
+		return "", fmt.Errorf("client is not consuming")
+	}
+	if c.resetDuringConsumption {
+		c.Connect(c.brokerName)
+		c.resetDuringConsumption = false
+	}
+
+	request := message.ConsumeMessageRequest{Name: c.brokerName, Type: message.MessageType_MESSAGETOPIC, Ip: c.selfIp}
 	err := c.queueMessageClient.Send(&request)
 	if err != nil {
 		return "", nil

@@ -1,13 +1,15 @@
 package broker
 
 import (
+	"fmt"
+
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/consumer"
 	"github.com/jdramirezl/proyecto-1-topicos/mom/internal/linked_list"
 )
 
 type Queue struct {
 	Messages        *linked_list.LinkedList
-	Consumers       []consumer.Consumer
+	Consumers       []*consumer.Consumer
 	CurrentConsumer int
 	ConsumerMap     map[string]chan string // Why chan string? does it matter?
 	Creator         string
@@ -18,7 +20,7 @@ func NewQueue(creator_ip string) *Queue {
 
 	q := Queue{
 		Messages:        &messageList,
-		Consumers:       []consumer.Consumer{},
+		Consumers:       []*consumer.Consumer{},
 		CurrentConsumer: -1,
 		ConsumerMap:     map[string]chan string{},
 		Creator:         creator_ip,
@@ -35,8 +37,8 @@ func (q *Queue) GetMessages() *linked_list.LinkedList {
 	return q.Messages
 }
 
-func (q *Queue) GetConsumers() *[]consumer.Consumer {
-	return &q.Consumers
+func (q *Queue) GetConsumers() []*consumer.Consumer {
+	return q.Consumers
 }
 
 func (q *Queue) Consume() {
@@ -44,7 +46,6 @@ func (q *Queue) Consume() {
 		if q.CurrentConsumer == -1 {
 			continue
 		}
-
 		message := q.Messages.Pop()
 		if message != nil {
 			go q.Send(*message)
@@ -58,18 +59,23 @@ func (q *Queue) Send(message string) {
 }
 
 func (q *Queue) roundRobin() {
+	fmt.Println("i was called")
 	if q.CurrentConsumer == -1 && len(q.ConsumerMap) > 0 {
 		q.CurrentConsumer = 0
 	}
 
 	for !q.Consumers[q.CurrentConsumer].Available {
+		// fmt.Println("im stuck step daddy")
 		q.CurrentConsumer = (q.CurrentConsumer + 1) % len(q.Consumers)
 	}
 }
 
 func (q *Queue) sendMessage(message string) {
 	q.Consumers[q.CurrentConsumer].Available = false
+	fmt.Printf("i havent sent the message: %s\n", message)
+	fmt.Println(q.Consumers[q.CurrentConsumer].IP)
 	q.ConsumerMap[q.Consumers[q.CurrentConsumer].IP] <- message
+	fmt.Println("i sent the message")
 }
 
 func (q *Queue) AddConsumer(address string) chan string {
@@ -77,7 +83,7 @@ func (q *Queue) AddConsumer(address string) chan string {
 	cons := consumer.NewConsumer(address)
 	q.ConsumerMap[cons.IP] = channel
 
-	q.Consumers = append(q.Consumers, cons)
+	q.Consumers = append(q.Consumers, &cons)
 	q.roundRobin() // When current consumer is -1
 
 	return channel
@@ -88,7 +94,7 @@ func (q *Queue) RemoveConsumer(address string) {
 	if len(q.ConsumerMap) == 0 {
 		q.CurrentConsumer = -1
 	}
-	var newConsumers []consumer.Consumer
+	var newConsumers []*consumer.Consumer
 	for _, consumer := range q.Consumers {
 		if consumer.IP == address {
 			continue
@@ -107,8 +113,13 @@ func (q *Queue) PopMessage() {
 }
 
 func (q *Queue) EnableConsumer(consumerIP string) {
+	fmt.Println("Arrived consumer: " + consumerIP)
 	for _, consumer := range q.Consumers {
+		fmt.Println("Seeing consumer: " + consumer.IP)
 		if consumer.IP == consumerIP {
+			fmt.Println(consumer.IP)
+			fmt.Println(consumerIP)
+			fmt.Println("i entered the important condition")
 			consumer.Available = true
 			return
 		}

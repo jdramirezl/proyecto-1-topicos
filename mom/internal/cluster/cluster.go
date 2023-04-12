@@ -128,26 +128,27 @@ func printConnections(conns []*grpc.ClientConn) {
 func (c *Config) AddPeer(peerIP string) {
 	if c.IsLeader() {
 		// Add peer to others
-		fmt.Println("New peer leader!: ")
-		printConnections(c.peerConnections)
+		// fmt.Println("New peer leader!: ")
+		// printConnections(c.peerConnections)
 		c.join(peerIP)
 	} else {
-		fmt.Println("New peer!: ")
-		printConnections(c.peerConnections)
+
+		// fmt.Println("New peer!: ")
+		// printConnections(c.peerConnections)
 	}
 
 	c.peerIPs = append(c.peerIPs, peerIP)
-	fmt.Print("before")
-	printConnections(c.peerConnections)
+	// fmt.Print("before")
+	// printConnections(c.peerConnections)
 	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
 	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
-	fmt.Print("after")
-	printConnections(c.peerConnections)
+	// fmt.Print("after")
+	// printConnections(c.peerConnections)
 }
 
 // Sender
 func (c *Config) join(ip string) {
-	fmt.Println("In join!!")
+	// fmt.Println("In join!!")
 	printConnections(c.peerConnections)
 	for _, conn := range c.peerConnections {
 		client := proto_cluster.NewClusterServiceClient(conn)
@@ -279,6 +280,10 @@ func getHost(target string) string {
 func (c *Config) startElection() {
 	fmt.Println("Starting Election")
 	printConnections(c.peerConnections)
+
+	// Delete
+	c.RemovePeer(c.leaderIP)
+
 	newLeader := c.selfIP
 	bestTime := c.uptime
 	c.isVoting = true
@@ -307,6 +312,8 @@ func (c *Config) startElection() {
 
 	c.isVoting = false
 
+	c.RefreshTimeout()
+
 	if c.IsLeader() {
 		client := proto_resolver.NewResolverServiceClient(c.resolverConn)
 		req := proto_resolver.MasterMessage{Ip: c.selfIP}
@@ -332,7 +339,7 @@ func (c *Config) CatchYouUp(
 	queues map[string]*broker.Queue,
 	topics map[string]*broker.Topic,
 ) {
-	fmt.Println("Starting to catchUp! Catching up: " + getHost(follower_conn.Target()))
+	// fmt.Println("Starting to catchUp! Catching up: " + getHost(follower_conn.Target()))
 	cluster_client := proto_cluster.NewClusterServiceClient(follower_conn)
 	message_client := proto_message.NewMessageServiceClient(follower_conn)
 
@@ -345,7 +352,7 @@ func (c *Config) CatchYouUp(
 
 	// Add Peers
 	for _, ip := range c.peerIPs {
-		fmt.Println("Sending ip in catch up: " + ip)
+		// fmt.Println("Sending ip in catch up: " + ip)
 		if getHost(ip) == getHost(follower_conn.Target()) {
 			continue
 		}
@@ -384,6 +391,8 @@ func (c *Config) CatchYouUp(
 			topic,
 		)
 	}
+
+	fmt.Println("Finished catching up: " + getHost(follower_conn.Target()))
 }
 
 func (c *Config) messageSystemCatchUp(
@@ -423,7 +432,7 @@ func (c *Config) messageSystemCatchUp(
 
 	// Add consumers
 	consumers := system.GetConsumers()
-	for _, consumer := range *consumers {
+	for _, consumer := range consumers {
 		req := proto_cluster.SubscriberRequest{
 			Name: name,
 			Type: system_req_type,
@@ -431,4 +440,5 @@ func (c *Config) messageSystemCatchUp(
 		}
 		c_client.AddSubscriber(context.Background(), &req)
 	}
+
 }
