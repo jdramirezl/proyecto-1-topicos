@@ -93,6 +93,11 @@ services:
     volumes:
       - ./mom:/app
 
+
+
+
+
+
   follower-2:
     build:
       context: ./mom
