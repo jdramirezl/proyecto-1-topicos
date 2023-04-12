@@ -164,6 +164,13 @@ Las rutas de acceso son las siguientes:
 Para usar cada una de estas rutas, se debe enviar un request GET con los parametros necesarios en el formato:
 `http://<gateway_ip>:<gateway_port>/<ruta>?<parametros>`
 
+Es importante seguir un orden de operaciones. 
+Para hacer cualquier accion se debe primero conectar al MOM con AddConnection. 
+
+Seguido a esto ya podemos subscribirnos, crear colas/topicos, enviar mensajes, etc.
+
+Para consumir mensajes debemos subscribirnos primero a la cola/topico.
+
 
 # 5. otra información que considere relevante para esta actividad.
 
