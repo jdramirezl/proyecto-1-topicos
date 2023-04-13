@@ -7,19 +7,19 @@ proto:
 
 
 gateway:
-	@docker-compose up -f ./docker-compose.gateway.yml
+	@docker-compose -f ./docker-compose.gateway.yml up
 
 consumer:
-	@docker-compose up -f ./docker-compose.consumer.yml
+	@docker-compose -f ./docker-compose.consumer.yml up
 
 resolver:
-	@docker-compose up -f ./docker-compose.resolver.yml
+	@docker-compose -f ./docker-compose.resolver.yml up
 
 node1:
-	@docker-compose up -f ./docker-compose.node1.yml
+	@docker-compose -f ./docker-compose.node1.yml up
 
 node2:
-	@docker-compose up -f ./docker-compose.node2.yml
+	@docker-compose -f ./docker-compose.node2.yml up
 
 node3:
-	@docker-compose up -f ./docker-compose.node3.yml
+	@docker-compose -f ./docker-compose.node3.yml up
