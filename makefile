@@ -1,4 +1,4 @@
-.PHONY: proto
+.PHONY: proto gateway consumer resolver node1 node2 node3
 
 proto:
 	@protoc --go_out=./mom/internal --go-grpc_out=./mom/internal ./mom/proto/cluster.proto
