@@ -27,11 +27,9 @@ type Client struct {
 
 func NewClient(host, port, selfIp string) Client {
 	grpcConnResolver, err := connection.NewGrpcClient(host, port)
-	fmt.Println("8==================D")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("8==================D")
 	resolverClient := resolver.NewResolverServiceClient(grpcConnResolver)
 
 	res, err := resolverClient.GetMaster(context.Background(), &empty.Empty{})
@@ -44,7 +42,6 @@ func NewClient(host, port, selfIp string) Client {
 
 	host, port, _ = net.SplitHostPort(ip)
 	grpcConn, err := connection.NewGrpcClient(host, port)
-	fmt.Println("8==================D")
 	if err != nil {
 		panic(err)
 	}

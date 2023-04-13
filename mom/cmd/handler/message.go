@@ -41,21 +41,18 @@ func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMes
 		if err != nil {
 			return err
 		}
-		fmt.Println("1")
 		consumerIp := request.Ip
 		err = q.momService.EnableConsumer(request.Name, consumerIp, request.Type)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("2")
 		systemType := proto_cluster.Type_QUEUE
 		messageType := request.Type
 		if messageType == proto_message.MessageType_MESSAGETOPIC {
 			systemType = proto_cluster.Type_TOPIC
 		}
 
-		fmt.Println("3")
 		broker, err := q.momService.GetBroker(request.Name, systemType)
 		if err != nil {
 			return err
@@ -66,7 +63,6 @@ func (q *MessageService) ConsumeMessage(stream message.MessageService_ConsumeMes
 		payload := <-broker.GetConsumerChannel(consumerIp)
 		response := &message.ConsumeMessageResponse{Payload: payload}
 		// sincronizar con replicas
-		fmt.Println("5")
 		err = stream.Send(response)
 		if err != nil {
 			return err

@@ -96,8 +96,6 @@ func GetLeader(selfIP string, resolverConn *grpc.ClientConn) string {
 	client := proto_resolver.NewResolverServiceClient(resolverConn)
 
 	res, _ := client.GetMaster(context.Background(), &emptypb.Empty{})
-	// fmt.Println(err)
-	// fmt.Println("8===============D")
 	_leaderIP := res.Ip
 
 	if _leaderIP == "" {
@@ -138,7 +136,6 @@ func (c *Config) AddPeer(peerIP string) {
 	}
 
 	c.peerIPs = append(c.peerIPs, peerIP)
-	// fmt.Print("before")
 	// printConnections(c.peerConnections)
 	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
 	c.peerConnections = append(c.peerConnections, peerConn) // TODO: Cambiar el dial
@@ -148,7 +145,6 @@ func (c *Config) AddPeer(peerIP string) {
 
 // Sender
 func (c *Config) join(ip string) {
-	// fmt.Println("In join!!")
 	printConnections(c.peerConnections)
 	for _, conn := range c.peerConnections {
 		client := proto_cluster.NewClusterServiceClient(conn)

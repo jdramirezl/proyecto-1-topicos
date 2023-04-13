@@ -117,9 +117,6 @@ func (q *Queue) EnableConsumer(consumerIP string) {
 	for _, consumer := range q.Consumers {
 		fmt.Println("Seeing consumer: " + consumer.IP)
 		if consumer.IP == consumerIP {
-			fmt.Println(consumer.IP)
-			fmt.Println(consumerIP)
-			fmt.Println("i entered the important condition")
 			consumer.Available = true
 			return
 		}

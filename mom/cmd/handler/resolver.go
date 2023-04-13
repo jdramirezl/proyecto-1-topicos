@@ -20,7 +20,6 @@ func (c *ResolverService) GetMaster(ctx context.Context, emp *empty.Empty) (*pro
 	res := proto_resolver.MasterMessage{
 		Ip: currentIp,
 	}
-	// fmt.Println("============")
 	// fmt.Println(currentIp)
 	// p, _ := peer.FromContext(ctx)
 	// fmt.Println("Calling get master from: " + string(p.Addr.String()))
