@@ -90,9 +90,9 @@ func (s *momService) Update() {
 		conf := s.GetConfig()
 		for {
 
-			time.Sleep(time.Second * 25)
+			time.Sleep(time.Second * 60)
 
-			// fmt.Println("started catching up of peer")
+			fmt.Println("Started catching up")
 			for _, conn := range conf.GetPeers() {
 
 				conf.CatchYouUp(
@@ -168,7 +168,8 @@ func (s *momService) GetConfig() *cluster.Config {
 
 // Create a new connection and add it to the list of active connections
 func (s *momService) CreateConnection(address string) {
-	// fmt.Println("Connection new received: " + address)
+	fmt.Println("New connection received: " + address)
+
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
 			client := proto_cluster.NewClusterServiceClient(conn)
@@ -206,15 +207,15 @@ func (s *momService) DeleteConnection(deleteAddress string) {
 // Create a new queue and add it to the list of active queues
 func (s *momService) CreateQueue(name string, clientIP string) error {
 	if !s.IsConnected(clientIP) {
+		fmt.Printf("Client %s is not connected", clientIP)
 		return ErrNotConnected
 	}
 
 	if s.SystemExists(name, message.MessageType_MESSAGEQUEUE) {
+		fmt.Printf("Queue %s already exists", name)
 		return ErrSystemExists
 	}
 
-	// fmt.Println("======= creating queue before ======")
-	// fmt.Println(s.queues)
 
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
@@ -235,8 +236,7 @@ func (s *momService) CreateQueue(name string, clientIP string) error {
 		s.queues[name].Consume()
 	}
 
-	// fmt.Println("======= creating queue after ======")
-	// fmt.Println(s.queues)
+	fmt.Println("Creating queue: "+name, "with creator: "+clientIP)
 
 	return nil
 }
@@ -244,11 +244,9 @@ func (s *momService) CreateQueue(name string, clientIP string) error {
 // Delete the queue with the given name
 func (s *momService) DeleteQueue(name string, clientIp string) error {
 	if clientIp != s.queues[name].Creator {
-		// fmt.Println("not creator")
+		fmt.Printf("Client %s is not the creator of queue %s", clientIp, name)
 		return ErrBrokerNotFound
 	}
-
-	// fmt.Println("DELETING QUEUE IN MOM: " + name)
 
 	if s.Config.IsLeader() {
 		for _, conn := range s.GetConfig().GetPeers() {
@@ -261,11 +259,9 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 			client.RemoveMessagingSystem(context.Background(), &req)
 		}
 	}
-	// fmt.Println("Before delete")
-	// fmt.Println(s.queues)
+
 	delete(s.queues, name)
-	// fmt.Println("After delete")
-	// fmt.Println(s.queues)
+	fmt.Println("Deleting queue: "+name, "with creator: "+clientIp)
 	return nil
 }
 
@@ -273,10 +269,12 @@ func (s *momService) DeleteQueue(name string, clientIp string) error {
 func (s *momService) CreateTopic(name string, clientIP string) error {
 
 	if !s.IsConnected(clientIP) {
+		fmt.Printf("Client %s is not connected", clientIP)
 		return ErrNotConnected
 	}
 
 	if s.SystemExists(name, message.MessageType_MESSAGETOPIC) {
+		fmt.Printf("Topic %s already exists", name)
 		return ErrSystemExists
 	}
 
@@ -294,6 +292,7 @@ func (s *momService) CreateTopic(name string, clientIP string) error {
 
 	topic := broker.NewTopic(clientIP)
 	s.topics[name] = topic
+	fmt.Println("Creating topic: "+name, "with creator: "+clientIP)
 
 	return nil
 }
@@ -301,6 +300,7 @@ func (s *momService) CreateTopic(name string, clientIP string) error {
 // Delete the queue with the given name
 func (s *momService) DeleteTopic(name string, clientIp string) error {
 	if clientIp != s.topics[name].Creator {
+		fmt.Printf("Client %s is not the creator of topic %s", clientIp, name)
 		return ErrBrokerNotFound
 	}
 
@@ -317,17 +317,21 @@ func (s *momService) DeleteTopic(name string, clientIp string) error {
 	}
 
 	delete(s.topics, name)
+	fmt.Println("Deleting topic: "+name, "with creator: "+clientIp)
 	return nil
 }
 
 // Add a subscriber to a queue
 func (s *momService) Subscribe(brokerName string, address string, systemType proto_cluster.Type) error {
 	if !s.IsConnected(address) {
+		fmt.Printf("Client %s is not connected", address)
 		return ErrNotConnected
 	}
 
 	broker, err := s.GetBroker(brokerName, systemType)
+
 	if err != nil {
+		fmt.Printf("Broker %s not found", brokerName)
 		return err
 	}
 
@@ -344,6 +348,7 @@ func (s *momService) Subscribe(brokerName string, address string, systemType pro
 	}
 
 	broker.AddConsumer(address)
+	fmt.Println("Adding subscriber: "+address, "to broker: "+brokerName)
 
 	return nil
 }
@@ -351,11 +356,13 @@ func (s *momService) Subscribe(brokerName string, address string, systemType pro
 // Remove a subscriber from a queue
 func (s *momService) Unsubscribe(brokerName string, address string, systemType proto_cluster.Type) error {
 	if !s.IsConnected(address) {
+		fmt.Printf("Client %s is not connected", address)
 		return ErrNotConnected
 	}
 
 	broker, err := s.GetBroker(brokerName, systemType)
 	if err != nil {
+		fmt.Printf("Broker %s not found", brokerName)
 		return err
 	}
 
@@ -372,6 +379,7 @@ func (s *momService) Unsubscribe(brokerName string, address string, systemType p
 	}
 
 	broker.RemoveConsumer(address)
+	fmt.Println("Removing subscriber: "+address, "from broker: "+brokerName)
 	return nil
 }
 
@@ -383,19 +391,11 @@ func (s *momService) SendMessage(brokerName string, payload string, messageType 
 		systemType = proto_cluster.Type_TOPIC
 	}
 
-	// fmt.Println("======= searching bnroker ======")
-	// fmt.Println(brokerName, payload)
-	// fmt.Println("======= queues ======")
-	// if val, ok := s.queues["default"]; ok {
-	// 	// fmt.Println("im in here")
-	// 	fmt.Println(val)
-	// }
 
-	// fmt.Println(brokerName)
-	// fmt.Println("====")
-	// fmt.Println(payload)
+
 	broker, err := s.GetBroker(brokerName, systemType)
 	if err != nil {
+		fmt.Printf("Broker %s not found", brokerName)
 		return err
 	}
 
@@ -412,6 +412,7 @@ func (s *momService) SendMessage(brokerName string, payload string, messageType 
 	}
 
 	broker.AddMessage(payload)
+	fmt.Println("Sending message: "+payload, "to broker: "+brokerName)
 	return nil
 }
 
@@ -420,12 +421,13 @@ func (s *momService) EnableConsumer(brokerName string, consumerIP string, messag
 	if messageType == message.MessageType_MESSAGETOPIC {
 		systemType = proto_cluster.Type_TOPIC
 	}
-	fmt.Println("im 1")
+	
 	broker, err := s.GetBroker(brokerName, systemType)
 	if err != nil {
+		fmt.Printf("Broker %s not found", brokerName)
 		return err
 	}
-	fmt.Println("im 2")
+	
 	broker.EnableConsumer(consumerIP)
 
 	if s.Config.IsLeader() {
@@ -440,30 +442,28 @@ func (s *momService) EnableConsumer(brokerName string, consumerIP string, messag
 			client.EnableConsumer(context.Background(), &req)
 		}
 	}
-
+	fmt.Println("Enabling consumer: "+consumerIP, "to broker: "+brokerName)
 	return nil
 }
 
 func (s *momService) GetBroker(brokerName string, systemType proto_cluster.Type) (broker.Broker, error) {
 	if systemType == proto_cluster.Type_QUEUE {
-		// fmt.Println("i enterd here")
+		
 		for name, queue := range s.queues {
-			// fmt.Println(name)
-			// fmt.Println(brokerName)
 			if name == brokerName {
+				fmt.Println("Found queue: "+name)
 				return queue, nil
 			}
 		}
 	} else {
 		for name, topic := range s.topics {
-
-			// fmt.Println("im fkin gaye")
 			if name == brokerName {
+				fmt.Println("Found topic: "+name)
 				return topic, nil
 			}
 		}
 	}
 
-	// fmt.Println("i didnt find sht")
+	
 	return nil, ErrBrokerNotFound
 }

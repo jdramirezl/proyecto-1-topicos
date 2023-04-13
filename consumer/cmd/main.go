@@ -23,6 +23,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(msg)
+		fmt.Println("Received message: ", msg)
 	}
 }

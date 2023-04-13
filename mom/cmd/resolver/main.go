@@ -30,6 +30,8 @@ func main() {
 	proto_resolver.RegisterResolverServiceServer(server, h.ResolverService)
 	reflection.Register(server)
 
+
+	log.Printf("Resolver is ready to be used\n")
 	log.Printf("Listening on port: %v\n", port)
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
