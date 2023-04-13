@@ -14,8 +14,6 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -55,11 +53,10 @@ func NewConfig() *Config {
 		peerConnections: []*grpc.ClientConn{},
 		leaderIP:        _leaderIP,
 		timeout:         time.Now().Add(30 * time.Second).Unix(), // Revisar
-		interval:        2 * time.Second,
+		interval:        10 * time.Second,
 		selfIP:          _selfAddress,
 		resolverConn:    _resolverConn, // TODO
 	}
-	
 
 	if !conf.IsLeader() {
 		conf.AddPeer(_leaderIP)
@@ -126,7 +123,7 @@ func (c *Config) AddPeer(peerIP string) {
 	if c.IsLeader() {
 		c.join(peerIP)
 	}
-	
+
 	fmt.Println("New peer: " + peerIP)
 	c.peerIPs = append(c.peerIPs, peerIP)
 	peerConn, _ := grpc.Dial(peerIP, grpc.WithInsecure())
@@ -157,7 +154,7 @@ func (c *Config) RemovePeer(peerIP string) {
 		newPeerIPs = append(newPeerIPs, peerIP)
 	}
 	c.peerIPs = newPeerIPs
-	
+
 	var newPeerConnections []*grpc.ClientConn
 	for _, peerConn := range c.peerConnections {
 		IP := getHost(peerConn.Target())
@@ -213,7 +210,6 @@ func (c *Config) watchPeers() {
 				break
 			}
 
-			
 			c.heartbeat()
 			time.Sleep(c.interval)
 		}
@@ -230,24 +226,22 @@ func (c *Config) RefreshTimeout() {
 func (c *Config) sendBeat(conn *grpc.ClientConn) {
 	client := proto_cluster.NewClusterServiceClient(conn)
 
-	deadline := time.Now().Add(5 * time.Second)
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-
 	_, err := client.Heartbeat(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		if status.Code(err) == codes.DeadlineExceeded {
-			// slave did not respond to heartbeat, remove it from the list
-			c.orderRemove(getHost(conn.Target()))
-		}
+
+		fmt.Println("Error found in beat!")
+		c.orderRemove(getHost(conn.Target()))
+
+		return
 	}
-	return
+
 }
 
 // Sender
 func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
-	// fmt.Println("Im master and im refreshing!")
 	for _, conn := range c.peerConnections {
 		fmt.Println("Sending heartbeat to: " + getHost(conn.Target()))
 		c.sendBeat(conn)
@@ -270,21 +264,17 @@ func (c *Config) startElection() {
 	newLeader := c.selfIP
 	bestTime := c.uptime
 	c.isVoting = true
-	
+
 	for _, conn := range c.peerConnections {
-		
+
 		if getHost(conn.Target()) == getHost(c.leaderIP) {
 			continue
 		}
-
-		
 
 		client := proto_cluster.NewClusterServiceClient(conn)
 		res, _ := client.ElectLeader(context.Background(), &emptypb.Empty{})
 
 		uptime := res.Uptime
-
-		
 
 		if uptime > bestTime {
 			newLeader = getHost(conn.Target())
