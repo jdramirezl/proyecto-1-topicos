@@ -75,7 +75,13 @@ No funcionales:
 - "github.com/golang/protobuf/ptypes/empty"
 
 ## IP o nombres de dominio en nube o en la máquina servidor.
-TODO: DREW!!!!
+- Gateway private: 172.31.87.80
+- Gateway public (Elastic): 52.207.244.87
+- Consumer private: 172.31.87.2
+- Resolver private: 172.31.89.34
+- Replica 1 private: 172.31.85.186
+- Replica 2 private: 172.31.94.68
+- Replica 3 private: 172.31.80.125
 
 ## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
 
@@ -103,20 +109,32 @@ Para el gateway
 
 Para el resolvedor de IPs
 ```
-- PORT=8080 // Unico parametro, su puerto
+- PORT= // Unico parametro, su puerto
+```
+
+Para el consumidor
+```
+- SELF_IP= // IP propia
+- MOM_HOST= // IP del Gateway
+- MOM_PORT= // Puerto del gateway
+- CLUSTER_PORT= // Puerto para comunicarse con el cluster
 ```
 
 ### Configuracion de los parametros
-1. Ingresar al docker-compose
-2. En cada contenedor cambiar los parametros de configuracion en la seccion "environment"
+1. Ingresar a la maquina que se desea modificar
+2. Ingresar a la carpeta del proyecto con `cd proyecto-1-topicos` 
+3. Elegir el docker-compose de su instancia elegida (Si es el resolver se llama `docker-compose.resolver.yml`)
+4. Editar el archivo con su editor favorito. E.G: `nvim docker-compose.resolver.yml`
+5. En cada contenedor cambiar los parametros de configuracion en la seccion "environment"
 
 ## Como se lanza el servidor.
 1. Ingresar a AWS
-2. Acceder a la consola de las instancias EC2 mediante SSH 
-    * gateway: Instancia donde tenemos el gateway
-    * mom: Instancia donde tenemos el MOM Server
-3. Levantar el contenedor en cada parte mediante `sudo docker-compose up` 
-
+2. Acceder a la terminal de cada instancia, mediante su metodo preferido (E.G: SSH)
+3. Levantar el contenedor en cada parte mediante `sudo docker-compose up` en el siguiente orden: 
+    * resolver: Instancia con el resolver de IPs del mom y esperar 10 segundos (O hasta que inicie)
+    * replica: Instancia(s) con los brokers del sistema, levantar cada uno con unos 10 segundos de diferencia
+    * gateway: Instancia con el gateway
+    * consumer: Instancia con el consumidor del sistema, puede haber mas de uno
 
 ## Guia de uso para usuario
 
@@ -164,12 +182,12 @@ Las rutas de acceso son las siguientes:
 Para usar cada una de estas rutas, se debe enviar un request GET con los parametros necesarios en el formato:
 `http://<gateway_ip>:<gateway_port>/<ruta>?<parametros>`
 
-Es importante seguir un orden de operaciones. 
-Para hacer cualquier accion se debe primero conectar al MOM con AddConnection. 
-
-Seguido a esto ya podemos subscribirnos, crear colas/topicos, enviar mensajes, etc.
-
-Para consumir mensajes debemos subscribirnos primero a la cola/topico.
+Notas:
+- Para enviar un mensaje el contenido se pone en el body!
+- Es importante seguir un orden de operaciones. 
+- Para hacer cualquier accion se debe primero conectar al MOM con AddConnection. 
+- Seguido a esto ya podemos subscribirnos, crear colas/topicos, enviar mensajes, etc.
+- Para consumir mensajes debemos subscribirnos primero a la cola/topico.
 
 
 # 5. otra información que considere relevante para esta actividad.
