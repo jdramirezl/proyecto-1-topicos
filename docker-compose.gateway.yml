@@ -1,16 +1,16 @@
 version: "3.8"
 
 services:
-    gateway:
-        build:
-            context: .
-            dockerfile: ./gateway/Dockerfile
-        command: go run ./gateway/cmd/main.go
-        environment:
-            - SELF_IP=172.31.87.80
-            - MOM_HOST=172.31.89.34
-            - MOM_PORT=8080
-            - CLUSTER_PORT=8080
-            - PORT=8080
-        ports:
-            - 3000:8080
+  gateway:
+    build:
+      context: .
+      dockerfile: ./gateway/Dockerfile
+    command: go run ./gateway/cmd/main.go
+    environment:
+      - SELF_IP=172.31.87.80
+      - MOM_HOST=172.31.89.34
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
+      - PORT=8080
+    ports:
+      - 8080:8080

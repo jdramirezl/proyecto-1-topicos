@@ -1,13 +1,13 @@
 version: "3.8"
 
 services:
-    resolver:
-        build:
-            context: ./mom
-        command: go run ./cmd/resolver/main.go
-        environment:
-            - PORT=8080
-        ports:
-            - "8080"
-        volumes:
-            - ./mom:/app
+  resolver:
+    build:
+      context: ./mom
+    command: go run ./cmd/resolver/main.go
+    environment:
+      - PORT=8080
+    ports:
+      - 8080:8080
+    volumes:
+      - ./mom:/app

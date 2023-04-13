@@ -1,18 +1,18 @@
 version: "3.8"
 
 services:
-    node:
-        build:
-            context: ./mom
-        command: go run ./cmd/node/main.go
-        environment:
-            - SELF_IP=172.31.80.125
-            - RESOLVER_IP=172.31.89.34
-            - RESOLVER_PORT=8080
-            - MOM_PORT=8080
-            - CLUSTER_PORT=8080
-            - PORT=8080
-        ports:
-            - "8080"
-        volumes:
-            - ./mom:/app
+  node:
+    build:
+      context: ./mom
+    command: go run ./cmd/node/main.go
+    environment:
+      - SELF_IP=172.31.80.125
+      - RESOLVER_IP=172.31.89.34
+      - RESOLVER_PORT=8080
+      - MOM_PORT=8080
+      - CLUSTER_PORT=8080
+      - PORT=8080
+    ports:
+      - 8080:8080
+    volumes:
+      - ./mom:/app
