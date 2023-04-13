@@ -263,6 +263,7 @@ func (c *Config) sendBeat(conn *grpc.ClientConn) {
 func (c *Config) heartbeat() { // TODO: cambiar el tiempo!
 	// fmt.Println("Im master and im refreshing!")
 	for _, conn := range c.peerConnections {
+		fmt.Println("Sending heartbeat to: " + getHost(conn.Target()))
 		c.sendBeat(conn)
 	}
 }
